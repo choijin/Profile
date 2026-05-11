@@ -18,8 +18,7 @@ const projects = (await getCollection("projects"))
   .slice(0,SITE.NUM_PROJECTS_ON_HOMEPAGE);
 
 const allwork = (await getCollection("work"))
-  .sort((a, b) => new Date(b.data.dateStart).valueOf() - new Date(a.data.dateStart).valueOf())
-  .slice(0,SITE.NUM_WORKS_ON_HOMEPAGE);
+  .sort((a, b) => new Date(b.data.dateStart).valueOf() - new Date(a.data.dateStart).valueOf());
 
 const work = await Promise.all(
   allwork.map(async (item) => {
@@ -36,27 +35,18 @@ const work = await Promise.all(
       <section class="space-y-6">
         <div class="animate">
           <h1 class="text-lg font-semibold text-black dark:text-white">
-            {SITE.NAME}
+            Jin Choi
           </h1>
           <p class="text-black/50 dark:text-white/60">
-            Software Engineer
+            Data Scientist
           </p>
         </div>
         <article class="space-y-4">
           <p class="animate">
-            I am a <em>software engineer</em>, <em>ui/ux designer</em>,
-            <em>product planner</em>, <em>problem solver</em>, <em>mentor</em>,
-            <em>forever student</em>, <em>minimalist</em>, and
-            <em>eternal optimist</em>.
+            Hi! I am a Data Scientist at State Farm, working on solving real-world problems through statistical modeling, machine learning, and scalable ML systems.  
           </p>
           <p class="animate">
-            I love to both build and break things. I am motivated by challenging
-            projects with self-guided research and dynamic problem solving.
-          </p>
-          <p class="animate">
-            This is my personal space for writing, work, and small experiments.
-            The site is powered by Astro content collections, so new posts are
-            just Markdown files.
+            As I ventured into the insurance domain, I am realizing there are so much to learn. I am working toward completing my CPCU certification (more than halfway done!) to strenghten my business knowledge in the financial/insurance domain. I've also became really interested in building end-to-end machine learning systems beyond just modeling itself. Lately, I’ve been spending time learning more about containerization, model serving APIs, orchestration tools, cloud infrastructure, and the engineering workflows behind training and deploying ML systems at scale.
           </p>
         </article>
       </section>
@@ -136,12 +126,11 @@ const work = await Promise.all(
 
       <section class="animate space-y-4">
         <h2 class="font-semibold text-black dark:text-white">
-          Let's Connect
+          Let's Connect!
         </h2>
         <article>
           <p>
-            If you want to get in touch with me about something or just to say hi,
-            reach out on social media or send me an email.
+            If you would like to speak more, feel free to reach out to me via any of the channels below.
           </p>
         </article>
         <ul class="flex flex-wrap gap-2">
@@ -154,8 +143,8 @@ const work = await Promise.all(
             </li>
           ))}
           <li class="line-clamp-1">
-            <Link href={`mailto:${SITE.EMAIL}`} aria-label={`Email ${SITE.NAME}`}>
-              {SITE.EMAIL}
+            <Link href="mailto:jinchoi595@gmail.com" aria-label="Email Jin Choi">
+              jinchoi595@gmail.com
             </Link>
           </li>
         </ul>
