@@ -1,0 +1,67 @@
+---
+import { type CollectionEntry, getCollection } from "astro:content";
+import PageLayout from "@layouts/PageLayout.astro";
+import Container from "@components/Container.astro";
+import FormattedDate from "@components/FormattedDate.astro";
+import { readingTime } from "@lib/utils";
+import BackToPrev from "@components/BackToPrev.astro";
+import Link from "@components/Link.astro";
+
+export async function getStaticPaths() {
+  const projects = (await getCollection("projects"))
+    .filter(post => !post.data.draft)
+    .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: project,
+  }));
+}
+type Props = CollectionEntry<"projects">;
+
+const project = Astro.props;
+const { Content } = await project.render();
+---
+
+<PageLayout title={project.data.title} description={project.data.description}>
+  <Container>
+    <div class="animate">
+      <BackToPrev href="/projects">
+        Back to projects
+      </BackToPrev>
+    </div>
+    <header class="space-y-4 my-10">
+      <div class="animate flex items-center gap-1.5">
+        <div class="font-base text-sm text-black/50 dark:text-white/60">
+          <FormattedDate date={project.data.date} />
+        </div>
+        &bull;
+        <div class="font-base text-sm text-black/50 dark:text-white/60">
+          {readingTime(project.body)}
+        </div>
+      </div>
+      <h1 class="animate text-4xl font-semibold leading-tight text-black dark:text-white">
+        {project.data.title}
+      </h1>
+      <p class="animate text-lg leading-relaxed text-black/50 dark:text-white/60">
+        {project.data.description}
+      </p>
+      {(project.data.demoURL || project.data.repoURL) && (
+        <nav class="animate flex gap-3 text-sm">
+          {project.data.demoURL && (
+            <Link href={project.data.demoURL} external>
+              Live site
+            </Link>
+          )}
+          {project.data.repoURL && (
+            <Link href={project.data.repoURL} external>
+              Repository
+            </Link>
+          )}
+        </nav>
+      )}
+    </header>
+    <article class="animate">
+      <Content />
+    </article>
+  </Container>
+</PageLayout>

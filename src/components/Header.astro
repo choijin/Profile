@@ -1,0 +1,29 @@
+---
+import Container from "@components/Container.astro";
+import Link from "@components/Link.astro";
+import ThemeToggle from "@components/ThemeToggle.astro";
+---
+
+<header>
+  <Container>
+    <div class="flex items-center justify-between">
+      <Link href="/" underline={false}>
+        <div class="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 text-sm font-bold text-black dark:border-white/20 dark:text-white">
+          AR
+        </div>
+      </Link>
+      <nav class="flex items-center gap-6 text-sm text-black/50 dark:text-white/60">
+        <Link href="/work">
+          work
+        </Link>
+        <Link href="/projects">
+          projects
+        </Link>
+        <Link href="/blog">
+          blog
+        </Link>
+        <ThemeToggle />
+      </nav>
+    </div>
+  </Container>
+</header>

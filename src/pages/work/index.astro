@@ -1,0 +1,52 @@
+---
+import { getCollection } from "astro:content";
+import PageLayout from "@layouts/PageLayout.astro";
+import Container from "@components/Container.astro";
+import { dateRange } from "@lib/utils";
+import { WORK } from "@consts";
+
+const collection = (await getCollection("work"))
+  .sort((a, b) => new Date(b.data.dateStart).valueOf() - new Date(a.data.dateStart).valueOf());
+
+const work = await Promise.all(
+  collection.map(async (item) => {
+    const { Content } = await item.render();
+    return { ...item, Content };
+  })
+);
+---
+
+<PageLayout title={WORK.TITLE} description={WORK.DESCRIPTION}>
+  <Container>
+    <div class="space-y-10">
+      <section class="animate space-y-3">
+        <h1 class="text-3xl font-semibold text-black dark:text-white">
+          Work
+        </h1>
+        <p class="text-black/50 dark:text-white/60">
+          Selected professional experience.
+        </p>
+      </section>
+      <ul class="space-y-8">
+        { 
+          work.map(entry => (
+            <li class="animate">
+              <div class="font-medium text-black dark:text-white">
+                {entry.data.company}
+              </div>
+              <div class="text-sm text-black/50 dark:text-white/60">
+                {entry.data.role}
+              </div>
+              <div class="text-sm text-black/50 dark:text-white/60">
+                {dateRange(entry.data.dateStart, entry.data.dateEnd)}
+              </div>
+              <article class="mt-3 text-sm">
+                <entry.Content />
+              </article>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </Container>
+</PageLayout>

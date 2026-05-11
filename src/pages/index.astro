@@ -1,0 +1,165 @@
+---
+import { getCollection } from "astro:content";
+import Container from "@components/Container.astro";
+import PageLayout from "@layouts/PageLayout.astro";
+import ArrowCard from "@components/ArrowCard.astro";
+import Link from "@components/Link.astro";
+import { dateRange } from "@lib/utils";
+import { SITE, HOME, SOCIALS } from "@consts";
+
+const blog = (await getCollection("blog"))
+  .filter(post => !post.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0,SITE.NUM_POSTS_ON_HOMEPAGE);
+
+const projects = (await getCollection("projects"))
+  .filter(project => !project.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0,SITE.NUM_PROJECTS_ON_HOMEPAGE);
+
+const allwork = (await getCollection("work"))
+  .sort((a, b) => new Date(b.data.dateStart).valueOf() - new Date(a.data.dateStart).valueOf())
+  .slice(0,SITE.NUM_WORKS_ON_HOMEPAGE);
+
+const work = await Promise.all(
+  allwork.map(async (item) => {
+    const { Content } = await item.render();
+    return { ...item, Content };
+  })
+);
+
+---
+
+<PageLayout title={HOME.TITLE} description={HOME.DESCRIPTION}>
+  <Container>
+    <div class="space-y-16">
+      <section class="space-y-6">
+        <div class="animate">
+          <h1 class="text-lg font-semibold text-black dark:text-white">
+            {SITE.NAME}
+          </h1>
+          <p class="text-black/50 dark:text-white/60">
+            Software Engineer
+          </p>
+        </div>
+        <article class="space-y-4">
+          <p class="animate">
+            I am a <em>software engineer</em>, <em>ui/ux designer</em>,
+            <em>product planner</em>, <em>problem solver</em>, <em>mentor</em>,
+            <em>forever student</em>, <em>minimalist</em>, and
+            <em>eternal optimist</em>.
+          </p>
+          <p class="animate">
+            I love to both build and break things. I am motivated by challenging
+            projects with self-guided research and dynamic problem solving.
+          </p>
+          <p class="animate">
+            This is my personal space for writing, work, and small experiments.
+            The site is powered by Astro content collections, so new posts are
+            just Markdown files.
+          </p>
+        </article>
+      </section>
+
+      <hr class="animate border-black/10 dark:border-white/15" />
+
+      <section class="animate space-y-6">
+        <div class="flex flex-wrap gap-y-2 items-center justify-between">
+          <h2 class="font-semibold text-black dark:text-white">
+            Work
+          </h2>
+          <Link href="/work">
+            See all work
+          </Link>
+        </div>
+        <ul class="space-y-6">
+          {work.map(entry => (
+            <li>
+              <div class="font-medium text-black dark:text-white">
+                {entry.data.company}
+              </div>
+              <div class="text-sm text-black/50 dark:text-white/60">
+                {entry.data.role}
+              </div>
+              <div class="text-sm text-black/50 dark:text-white/60">
+                {dateRange(entry.data.dateStart, entry.data.dateEnd)}
+              </div>
+              <article class="mt-3 text-sm">
+                <entry.Content />
+              </article>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <hr class="animate border-black/10 dark:border-white/15" />
+
+      <section class="animate space-y-6">
+        <div class="flex flex-wrap gap-y-2 items-center justify-between">
+          <h2 class="font-semibold text-black dark:text-white">
+            Recent projects
+          </h2>
+          <Link href="/projects">
+            See all projects
+          </Link>
+        </div>
+        <ul class="divide-y divide-black/10 dark:divide-white/15">
+          {projects.map(project => (
+            <li>
+              <ArrowCard entry={project} />
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <hr class="animate border-black/10 dark:border-white/15" />
+
+      <section class="animate space-y-6">
+        <div class="flex flex-wrap gap-y-2 items-center justify-between">
+          <h2 class="font-semibold text-black dark:text-white">
+            Blog posts
+          </h2>
+          <Link href="/blog">
+            See all posts
+          </Link>
+        </div>
+        <ul class="divide-y divide-black/10 dark:divide-white/15">
+          {blog.map(post => (
+            <li>
+              <ArrowCard entry={post} />
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <hr class="animate border-black/10 dark:border-white/15" />
+
+      <section class="animate space-y-4">
+        <h2 class="font-semibold text-black dark:text-white">
+          Let's Connect
+        </h2>
+        <article>
+          <p>
+            If you want to get in touch with me about something or just to say hi,
+            reach out on social media or send me an email.
+          </p>
+        </article>
+        <ul class="flex flex-wrap gap-2">
+          {SOCIALS.map(SOCIAL => (
+            <li class="flex gap-x-2 text-nowrap">
+              <Link href={SOCIAL.HREF} external aria-label={`${SITE.NAME} on ${SOCIAL.NAME}`}>
+                {SOCIAL.NAME}
+              </Link>
+              {"/"}
+            </li>
+          ))}
+          <li class="line-clamp-1">
+            <Link href={`mailto:${SITE.EMAIL}`} aria-label={`Email ${SITE.NAME}`}>
+              {SITE.EMAIL}
+            </Link>
+          </li>
+        </ul>
+      </section>
+    </div>
+  </Container>
+</PageLayout>
