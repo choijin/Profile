@@ -1,6 +1,6 @@
 # Profile
 
-An Astro Nano-based personal site styled after the quiet layout direction in `my-nice-place/`.
+An Astro Nano-based personal site
 
 ## Editing content
 
