@@ -30,6 +30,14 @@ const { Content } = await post.render();
     </div>
     <header class="space-y-4 my-10">
       <div class="animate flex items-center gap-1.5">
+        {post.data.category && (
+          <>
+            <div class="font-base text-sm text-black/50 dark:text-white/60">
+              {post.data.category}
+            </div>
+            &bull;
+          </>
+        )}
         <div class="font-base text-sm text-black/50 dark:text-white/60">
           <FormattedDate date={post.data.date} />
         </div>
@@ -44,6 +52,15 @@ const { Content } = await post.render();
       <p class="animate text-lg leading-relaxed text-black/50 dark:text-white/60">
         {post.data.description}
       </p>
+      {post.data.tags && post.data.tags.length > 0 && (
+        <div class="animate flex flex-wrap gap-2 text-sm text-black/50 dark:text-white/60">
+          {post.data.tags.map((tag) => (
+            <span class="rounded border border-black/10 px-2 py-1 dark:border-white/15">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
     </header>
     <article class="animate">
       <Content />

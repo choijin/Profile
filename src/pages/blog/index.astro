@@ -10,19 +10,29 @@ const data = (await getCollection("blog"))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
   
 type Acc = {
-  [year: string]: CollectionEntry<"blog">[];
+  [category: string]: CollectionEntry<"blog">[];
 }
 
 const posts = data.reduce((acc: Acc, post) => {
-    const year = post.data.date.getFullYear().toString();
-    if (!acc[year]) {
-      acc[year] = [];
+    const category = post.data.category ?? "Notes";
+    if (!acc[category]) {
+      acc[category] = [];
     }
-    acc[year].push(post);
+    acc[category].push(post);
     return acc;
   }, {});
 
-const years = Object.keys(posts).sort((a, b) => parseInt(b) - parseInt(a)); 
+const categoryOrder = ["Data Science", "ML Systems", "Notes"];
+const categories = Object.keys(posts).sort((a, b) => {
+  const aIndex = categoryOrder.indexOf(a);
+  const bIndex = categoryOrder.indexOf(b);
+
+  if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+  if (aIndex === -1) return 1;
+  if (bIndex === -1) return -1;
+
+  return aIndex - bIndex;
+}); 
 ---
 
 <PageLayout title={BLOG.TITLE} description={BLOG.DESCRIPTION}>
@@ -33,19 +43,19 @@ const years = Object.keys(posts).sort((a, b) => parseInt(b) - parseInt(a));
           Blog
         </h1>
         <p class="text-black/50 dark:text-white/60">
-          Essays and notes on building machine learning systems and tools.
+          Notes on statistical modeling, machine learning systems, and the tools I am learning from.
         </p>
       </section>
       <div class="space-y-4">
-        {years.map(year => (
+        {categories.map(category => (
           <section class="animate space-y-4">
             <div class="font-semibold text-black dark:text-white">
-              {year}
+              {category}
             </div>
             <div>
               <ul class="divide-y divide-black/10 dark:divide-white/15">
                 {
-                  posts[year].map((post) => (
+                  posts[category].map((post) => (
                     <li>
                       <ArrowCard entry={post}/>
                     </li>
