@@ -52,6 +52,16 @@ const work = await Promise.all(
         </article>
       </section>
 
+      <section class="animate space-y-3">
+        <h2 class="font-semibold text-black dark:text-white">
+          Certifications
+        </h2>
+        <ul class="space-y-1">
+          <li>AWS Certified Solutions Architect</li>
+          <li>AWS Certified Cloud Practitioner</li>
+        </ul>
+      </section>
+
       <hr class="animate border-black/10 dark:border-white/15" />
 
       <section class="animate space-y-6">
@@ -75,7 +85,7 @@ const work = await Promise.all(
               <div class="text-sm text-black/50 dark:text-white/60">
                 {dateRange(entry.data.dateStart, entry.data.dateEnd)}
               </div>
-              <article class="mt-3 text-base">
+              <article class="mt-3 prose-lg">
                 <entry.Content />
               </article>
             </li>

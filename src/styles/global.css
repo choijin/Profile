@@ -19,17 +19,17 @@ body {
 body {
   @apply font-sans antialiased;
   @apply flex flex-col;
-  @apply bg-stone-100 dark:bg-neutral-950;
+  @apply bg-orange-50 dark:bg-neutral-950;
   @apply text-black/75 dark:text-white/75;
 }
 
 .site-header {
-  @apply sticky top-0 z-50 py-6;
-  @apply bg-stone-100/95 backdrop-blur-md dark:bg-neutral-950/95;
+  @apply fixed inset-x-0 top-0 z-50 py-6;
+  @apply bg-orange-50/95 backdrop-blur-md dark:bg-neutral-950/95;
 }
 
 main {
-  @apply flex-1 pb-24;
+  @apply flex-1 pb-24 pt-24;
 }
 
 footer {
