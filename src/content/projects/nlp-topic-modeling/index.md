@@ -2,7 +2,9 @@
 title: "NLP Topic Modeling"
 description: "Topic modeling on scraped news articles using LDA, K-means clustering, BERT, and BART summarization."
 date: "2025-07-01"
+order: 3
 demoURL: "https://choijin.github.io/NLP_Topic_Modeling/"
+repoURL: "https://github.com/choijin/NLP_Topic_Modeling"
 ---
 
 ![NLP Topic Modeling](./nlp_pipeline.png)

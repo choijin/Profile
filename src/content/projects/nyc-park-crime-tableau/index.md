@@ -2,6 +2,7 @@
 title: "NYC Park Crime Tableau Dashboard"
 description: "A Tableau dashboard analyzing crime incidents at New York City parks."
 date: "2025-01-01"
+order: 9
 demoURL: "https://public.tableau.com/app/profile/jin.choi8484/viz/NYCParkCrime_16744573706270/NYCRates"
 ---
 

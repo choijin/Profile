@@ -2,7 +2,9 @@
 title: "NLP Text Stock Prediction"
 description: "Stock price prediction using LSTM and BERT models to analyze daily news headlines and forecast stock movement."
 date: "2025-09-01"
+order: 1
 demoURL: "https://choijin.github.io/NLP_Text_Stock_Prediction/"
+repoURL: "https://github.com/choijin/NLP_Text_Stock_Prediction"
 ---
 
 ![NLP Text Stock Prediction](./nlp_text_stock_prediction.png)

@@ -3,14 +3,14 @@ import { type CollectionEntry, getCollection } from "astro:content";
 import PageLayout from "@layouts/PageLayout.astro";
 import Container from "@components/Container.astro";
 import FormattedDate from "@components/FormattedDate.astro";
-import { readingTime } from "@lib/utils";
+import { compareProjects, readingTime } from "@lib/utils";
 import BackToPrev from "@components/BackToPrev.astro";
 import Link from "@components/Link.astro";
 
 export async function getStaticPaths() {
   const projects = (await getCollection("projects"))
     .filter(post => !post.data.draft)
-    .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+    .sort(compareProjects);
   return projects.map((project) => ({
     params: { slug: project.slug },
     props: project,
@@ -29,7 +29,7 @@ const { Content } = await project.render();
         Back to projects
       </BackToPrev>
     </div>
-    <header class="space-y-4 my-10">
+    <header class="space-y-3 mt-8 mb-5">
       <div class="animate flex items-center gap-1.5">
         <div class="font-base text-sm text-black/50 dark:text-white/60">
           <FormattedDate date={project.data.date} />
@@ -42,7 +42,7 @@ const { Content } = await project.render();
       <h1 class="animate text-4xl font-semibold leading-tight text-black dark:text-white">
         {project.data.title}
       </h1>
-      <p class="animate text-lg leading-relaxed text-black/50 dark:text-white/60">
+      <p class="animate text-base leading-relaxed text-black/50 dark:text-white/60">
         {project.data.description}
       </p>
       {(project.data.demoURL || project.data.repoURL) && (

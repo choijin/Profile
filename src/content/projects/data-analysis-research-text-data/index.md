@@ -2,7 +2,9 @@
 title: "Data Analysis on Research Text Data"
 description: "Exploratory text analysis on National Science Foundation research grant data."
 date: "2025-02-01"
+order: 8
 demoURL: "https://choijin.github.io/Data_Analysis_Research/"
+repoURL: "https://github.com/choijin/Data_Analysis_Research"
 ---
 
 ![Data Analysis on Research Text Data](./word_frequency.png)

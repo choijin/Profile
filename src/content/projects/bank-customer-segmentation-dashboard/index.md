@@ -2,7 +2,9 @@
 title: "Bank Customer Segmentation Dashboard"
 description: "An interactive dashboard for analyzing dummy bank customer data from the United Kingdom."
 date: "2025-03-01"
+order: 7
 demoURL: "https://choijin.github.io/Bank_Customer_Dashboard/"
+repoURL: "https://github.com/choijin/Bank_Customer_Dashboard"
 ---
 
 ![Bank Customer Segmentation Dashboard](./bank_dashboard.png)

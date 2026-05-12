@@ -23,6 +23,7 @@ export function readingTime(html: string) {
 export function dateRange(startDate: Date, endDate?: Date | string): string {
   const startMonth = startDate.toLocaleString("default", { month: "short" });
   const startYear = startDate.getFullYear().toString();
+  const start = `${startMonth} ${startYear}`;
   let endMonth;
   let endYear;
 
@@ -36,5 +37,20 @@ export function dateRange(startDate: Date, endDate?: Date | string): string {
     }
   }
 
-  return `${startMonth}${startYear} - ${endMonth}${endYear}`;
+  const end = endMonth ? `${endMonth} ${endYear}` : endYear;
+
+  return `${start} - ${end}`;
+}
+
+type ProjectLike = {
+  data: {
+    order?: number;
+    date: Date;
+  };
+};
+
+export function compareProjects(a: ProjectLike, b: ProjectLike) {
+  const order = (a.data.order ?? Number.MAX_SAFE_INTEGER) - (b.data.order ?? Number.MAX_SAFE_INTEGER);
+
+  return order || b.data.date.valueOf() - a.data.date.valueOf();
 }

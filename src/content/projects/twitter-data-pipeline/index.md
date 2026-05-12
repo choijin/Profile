@@ -2,7 +2,9 @@
 title: "Twitter Data Pipeline"
 description: "An Airflow ETL pipeline for Twitter data using Docker, Python, and AWS S3."
 date: "2025-05-01"
+order: 5
 demoURL: "https://choijin.github.io/Twitter_Data_Pipeline_ETL/"
+repoURL: "https://github.com/choijin/Twitter_Data_Pipeline_ETL"
 ---
 
 ![Twitter Data Pipeline](./twitter_pipeline.png)
