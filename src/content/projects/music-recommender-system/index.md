@@ -1,11 +1,13 @@
 ---
 title: "Music Recommender System"
-description: "A PySpark recommendation system for large-scale music listening data."
-date: "2025-04-01"
+description: "A PySpark recommender system for large-scale music listening data stored in HDFS."
+date: "2025-06-01"
+demoURL: "https://choijin.github.io/Music_Recommender_System/"
 ---
 
-This project used PySpark on NYU's High-Performance Computing cluster to extract and transform large-scale music listening data stored in HDFS.
+This big data project uses PySpark to extract and transform large-scale music listening data stored in HDFS and build a collaborative-filtering recommender system.
 
-I built and evaluated a collaborative-filtering recommender system with implicit feedback from listening behavior, including play counts and completion ratios.
-
-The ALS model outperformed a popularity baseline, improving Mean Average Precision by 16.7x.
+- Developed a recommender system using an Alternating Least Squares model.
+- Evaluated the model against a popularity baseline.
+- Used Mean Average Precision at K as the main performance metric.
+- Improved MAP@100 by 16.7x compared with the popularity baseline.

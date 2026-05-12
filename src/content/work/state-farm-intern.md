@@ -1,6 +1,6 @@
 ---
 company: "State Farm"
-role: "Data Science Intern, P&C Actuaries and Underwriting Modeling"
+role: "Data Science Intern"
 dateStart: "2023-05"
 dateEnd: "2024-05"
 ---
