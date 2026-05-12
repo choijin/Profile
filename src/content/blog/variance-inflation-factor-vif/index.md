@@ -6,85 +6,111 @@ category: "Data Science"
 tags: ["VIF", "Multicollinearity", "Regression"]
 ---
 
-Variance Inflation Factor, or VIF, is a diagnostic for multicollinearity.
+VIF is one of those diagnostics that looks simple, but it is easy to use mechanically without really thinking about what it is measuring.
 
-For a given predictor, VIF measures how much the variance of its estimated coefficient is inflated because that predictor can be explained by the other predictors.
+Variance Inflation Factor tells us how much the variance of a coefficient estimate is inflated because that predictor overlaps with the other predictors.
 
-## How VIF is calculated
+In other words, it is not asking whether a variable is useful. It is asking whether the model can estimate that variable's coefficient cleanly.
 
-For each predictor `X_j`, regress it on all the other predictors and calculate the R-squared from that auxiliary regression:
+## The basic idea
 
-<div class="math-block">
+To calculate VIF for a predictor, we temporarily make that predictor the target.
+
+If I want the VIF for `X_j`, I regress `X_j` on all the other predictors:
+
+```text
 X_j = alpha + X_{-j} gamma + error
-</div>
+```
 
-Then compute:
+Then I take the R-squared from that auxiliary regression and calculate:
 
-<div class="math-block">
+```text
 VIF_j = 1 / (1 - R_j^2)
-</div>
+```
 
-If `R_j^2` is close to 0, the predictor is not well explained by the other predictors and VIF is close to 1. If `R_j^2` is close to 1, the predictor is highly redundant and VIF becomes large.
+If the other predictors cannot explain `X_j`, then `R_j^2` is low and VIF stays close to 1.
 
-Rules of thumb vary, but values above 5 or 10 are often treated as warning signs.
+```text
+If R_j^2 = 0:
+VIF_j = 1 / (1 - 0) = 1
+```
 
-## Relationship to standard error
+If the other predictors explain `X_j` really well, then `R_j^2` gets close to 1 and VIF gets large.
 
-VIF connects directly to standard error. In linear regression, the standard error for a coefficient can be written in a way that includes VIF:
+```text
+If R_j^2 = 0.90:
+VIF_j = 1 / (1 - 0.90) = 10
+```
 
-<div class="math-block">
-SE(beta_j) = sqrt((sigma^2 / S_jj) * VIF_j)
-</div>
+That is the whole intuition: if a predictor can be reconstructed from the other predictors, its coefficient will be harder to estimate independently.
 
-So high VIF does not necessarily mean the coefficient is wrong. It means the coefficient is estimated with more uncertainty.
+## Why VIF shows up through standard errors
 
-That wider uncertainty leads to wider confidence intervals and can produce higher p-values, even when the predictor has a meaningful relationship with the target.
+High VIF does not automatically mean the coefficient is wrong. It means the coefficient is estimated with more uncertainty.
 
-## VIF and p-values
+That uncertainty shows up through the standard error:
 
-VIF and p-values are related through standard error, but they are not the same thing.
+```text
+SE_with_collinearity(beta_j)
+  = SE_without_collinearity(beta_j) * sqrt(VIF_j)
+```
 
-- High VIF with low p-value can happen when the effect is strong enough to remain significant despite collinearity.
-- Low VIF with high p-value means the variable may simply have weak predictive value, not a collinearity problem.
+So if `VIF = 9`, the standard error is inflated by:
 
-VIF diagnoses redundancy among predictors. It does not directly diagnose whether a predictor matters.
+```text
+sqrt(9) = 3
+```
 
-## Why adding a constant matters
+Larger standard errors make confidence intervals wider and p-values larger. A variable can have a real relationship with the target and still look statistically weak if its information overlaps heavily with other variables.
 
-The auxiliary regression used in VIF should include a constant/intercept.
+## The constant is not optional
 
-This is important because the usual R-squared definition compares the fitted model against a baseline model that predicts the mean of the response:
+One detail I want to remember: when calculating VIF, the auxiliary regression should include a constant.
 
-<div class="math-block">
+This matters because the usual R-squared compares the fitted model against a baseline model that predicts the mean.
+
+```text
 R^2 = 1 - SSE / SST
-</div>
 
-where:
-
-<div class="math-block">
 SST = sum_i (y_i - y_bar)^2
-</div>
+```
 
-The intercept aligns fitted values with the mean baseline. Without an intercept, the model is effectively being forced through zero, and the R-squared comparison can become distorted.
+The intercept is what lets the fitted values align with that mean baseline. Without an intercept, the auxiliary regression is effectively forced through zero. That can distort `R^2`, and because VIF is just a transformation of `R^2`, it can distort VIF too.
 
-That distortion matters because VIF is a direct transformation of `R_j^2`. If the auxiliary regression's R-squared is inflated or otherwise miscomputed, the VIF will also be misleading.
+This is especially easy to miss in `statsmodels`, because you often need to explicitly add the constant yourself before calculating VIF.
 
-This is why, when using `statsmodels`, it is important to add a constant before calculating VIF.
+```text
+X_with_constant = add_constant(X)
+```
 
-## Controls and VIF
+The point is not that the constant is interesting as a variable. The point is that the auxiliary regression needs the right baseline.
 
-Adding controls can only keep R-squared the same or increase it in the auxiliary regression. Since:
+## Controls can change VIF
 
-<div class="math-block">
-VIF_j = 1 / (1 - R_j^2)
-</div>
+Another detail from my notes that I like: VIF should be calculated in the design matrix that matches the model I am actually fitting.
 
-VIF with controls will generally be greater than or equal to VIF without controls.
+If I add controls, the auxiliary regression for `X_j` now has more variables available to explain `X_j`. R-squared can only stay the same or increase when predictors are added. So VIF can only stay the same or increase too.
 
-That does not automatically mean controls are bad. It means VIF must be interpreted in the context of the model being trained. If the model includes controls, the VIF should be assessed in that same trained setting.
+```text
+More variables in auxiliary regression
+  -> R_j^2 same or higher
+  -> VIF_j same or higher
+```
 
-## Practical takeaway
+That means a predictor may look fine without controls and become collinear after controls are added. But if VIF is acceptable with the controls included, then the version without controls is usually not the harder case.
 
-VIF is most useful when coefficient interpretation matters. It tells me when a coefficient may be unstable because the predictor overlaps too much with other predictors.
+## VIF and p-values are related, but not the same
 
-But VIF is not a feature deletion rule. It is a warning light: check stability, business meaning, p-values, standard errors, and whether the variable is needed for prediction or interpretation.
+I think of VIF and p-values as connected through standard error.
+
+A high VIF can push a p-value up by inflating the standard error. But a high VIF with a low p-value can still happen if the effect is strong enough. And a low VIF with a high p-value may simply mean the variable does not add much signal.
+
+So VIF tells me about redundancy. It does not tell me whether the variable matters.
+
+## How I would use it
+
+I would pay most attention to VIF when the coefficient itself is going to be interpreted.
+
+For a pure prediction model, correlated variables may not be a serious issue if validation performance is stable. But for a model where coefficients are used to explain effects, support business decisions, or build rating factors, VIF becomes more important.
+
+My practical takeaway: add the constant, calculate VIF in the same design matrix the model is trained on, and treat high VIF as a reason to inspect stability rather than as an automatic reason to drop a variable.

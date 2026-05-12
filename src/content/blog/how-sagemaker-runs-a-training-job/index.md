@@ -6,51 +6,75 @@ category: "ML Systems"
 tags: ["AWS", "SageMaker", "Docker"]
 ---
 
-A SageMaker training job is easier to understand when you separate the container from the orchestration.
+SageMaker made more sense to me when I stopped thinking of it as a mysterious AWS service and started thinking of it as a managed way to run a containerized training script.
 
-The container defines the environment and entry point. The SageMaker job decides when and where to run it.
+The container defines the environment. SageMaker decides where and how to run it.
 
-## The flow
+## The moving pieces
 
-A common flow looks like this:
+The flow I keep in my head looks like this:
 
-1. Source code lives in a Git repository.
-2. CI builds a Docker image.
-3. The image is pushed to Amazon ECR.
-4. A notebook or pipeline creates a SageMaker estimator.
-5. SageMaker launches a training instance.
-6. The instance pulls the Docker image.
-7. Training data and configuration are downloaded from S3.
-8. The container entry point runs.
-9. Model artifacts are written back to S3.
-10. Metrics and artifacts can also be logged to MLflow.
+```text
+Git repo
+  -> Docker image
+  -> ECR
+  -> SageMaker estimator
+  -> training instance
+  -> container entry point
+  -> artifacts in S3
+  -> metrics/artifacts in MLflow
+```
 
-## Docker image
+The Docker image is built before the training job runs. It contains the Python version, dependencies, source code, and entry points like `train`, `evaluate`, `predict`, or `serve`.
 
-The Docker image is the blueprint. It contains the Python runtime, dependencies, source code, and entry points such as `train`, `evaluate`, `predict`, or `serve`.
+ECR is where that image is stored. SageMaker does not need to know how the image was built. It just needs permission to pull it.
 
-The image is usually built before the notebook runs. SageMaker does not need to know how the code was built; it only needs access to the image in ECR.
+## What the notebook or pipeline does
 
-## Notebook or pipeline
+The notebook is not really where the model trains. It is more like the job launcher.
 
-The notebook acts as the orchestrator. It prepares training configuration, chooses the instance type, points to the Docker image, passes hyperparameters, sets environment variables, and calls `estimator.fit()`.
+It prepares configuration, chooses the instance type, points to the image URI, passes hyperparameters, sets environment variables, and calls something like `estimator.fit()`.
 
-That call is the trigger. SageMaker then provisions compute, pulls the image, mounts input data, and runs the configured entry point.
+That call is the trigger. SageMaker provisions the compute, pulls the image from ECR, downloads input data from S3, and runs the container entry point.
 
-## S3 and artifacts
+## Configuration and data
 
-S3 is the handoff layer. Training data, test data, configuration files, and model outputs can all move through S3.
+For a training job, I usually think about three kinds of inputs:
 
-This separation is useful because the container can stay generic while the job-specific inputs change.
+- data, such as train and test files
+- configuration, such as selected predictors, target, weights, constraints, distribution family, and link function
+- environment values, such as MLflow tracking URI or experiment name
+
+S3 becomes the handoff layer. The notebook can upload configuration to S3, SageMaker can mount or download it into the container, and the training script can read it at runtime.
+
+That separation is useful because the image can stay stable while the job-specific inputs change.
+
+## What happens inside the job
+
+Inside the training job, the container runs the entry point.
+
+In a GLM training workflow, that entry point might read the config, load training data, fit the model, evaluate it, write model artifacts, and log metrics.
+
+The output artifacts usually go back to S3. Experiment results can also be logged to MLflow.
+
+The basic pattern is:
+
+```text
+container starts
+  -> read inputs from /opt/ml/input/
+  -> run train entry point
+  -> write model to /opt/ml/model/
+  -> SageMaker uploads artifacts to S3
+```
 
 ## The mental model
 
-I think of SageMaker as:
+The cleanest way for me to remember SageMaker is:
 
-- Docker for the runtime
-- ECR for the image registry
-- S3 for inputs and outputs
-- SageMaker estimator for orchestration
-- MLflow for experiment tracking
+- Docker defines the runtime.
+- ECR stores the runtime.
+- S3 passes data, config, and artifacts.
+- SageMaker runs the job on managed compute.
+- MLflow tracks what happened.
 
-Once those roles are clear, the system feels less mysterious. A training job is just a controlled way to run a containerized script on managed compute.
+Once those roles are clear, SageMaker feels less like magic. It is a controlled way to run reproducible training jobs without manually managing the underlying EC2 lifecycle every time.

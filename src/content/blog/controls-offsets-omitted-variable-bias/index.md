@@ -6,56 +6,115 @@ category: "Data Science"
 tags: ["GLM", "Controls", "Offsets"]
 ---
 
-Controls and offsets both adjust a model for factors outside the main variables of interest, but they do it in different ways.
+Controls and offsets are easy to group together because they both sound like ways of "adjusting" a model.
 
-The distinction matters in insurance modeling because some variables, such as territory or symbol, may be important but awkward to estimate jointly with every other rating variable.
+But they are not doing the same thing. The difference matters, especially in insurance models where some effects may already exist in a rating plan, while others are being estimated in the current model.
 
-## Omitted variable bias
+The way I think about it is this: a control is something the model is allowed to learn. An offset is something the model is told to accept.
 
-Suppose we are modeling claim frequency using driver age, vehicle use, multiple-car status, vehicle symbol, and territory.
+## The omitted variable problem
 
-If territory is dropped from the model, driver age may partly act as a proxy for territory. For example, if a territory has a large share of young drivers and also has high claim frequency, the model may incorrectly attribute part of the territory effect to driver age.
+Suppose I am modeling claim frequency, and the candidate predictors include driver age, vehicle use, multiple-car status, territory, and symbol.
 
-That is omitted variable bias. The estimated coefficient for driver age no longer reflects only driver age; it also absorbs omitted structure.
+Now imagine I drop territory from the model. If a particular territory has both higher claim frequency and a larger share of young drivers, driver age may start acting partly as a proxy for territory. The age coefficient is no longer just about age. It is absorbing some of the territory effect too.
 
-## Control variables
+In a simple linear setup, omitted variable bias is often written this way:
 
-A control variable is included in the model and estimated jointly with the variables of interest.
+```text
+True model:
+Y = beta_0 + beta_1 X + beta_2 Z + error
 
-If territory is included as a control, the model estimates the effect of territory while also estimating the effect of driver age. This helps isolate the net effect of driver age after accounting for territory.
+Fitted model, after omitting Z:
+Y = alpha_0 + alpha_1 X + error
 
-The tradeoff is that controls can compete with other predictors for shared signal. Large categorical controls may also introduce multicollinearity or inflate standard errors.
+Bias in alpha_1 depends on:
+beta_2 * relationship between X and Z
+```
 
-## Offsets
+So the omitted variable has to matter for `Y`, and it has to be related to `X`. If both are true, the coefficient on `X` gets contaminated.
 
-An offset is used when the effect is treated as known rather than estimated.
+This is the part that feels especially important in pricing work. If a coefficient is going to influence a rating decision, it needs to represent the effect we think it represents.
 
-If territory and symbol factors were estimated separately, we can adjust exposure by those factors before fitting the model:
+## What a control does
 
-<div class="math-block">
-adjusted exposure = exposure * territory factor * symbol factor
-</div>
+A control variable is included in the model and estimated alongside the variables we care about.
 
-Alternatively, we can leave the target unadjusted and include the known adjustment as an offset:
+For a log-link GLM, that might look like:
 
-<div class="math-block">
-log(E[Y]) = X beta + log(territory factor * symbol factor)
-</div>
+```text
+log(E[Y]) = beta_0 + beta_1 age + beta_2 territory + beta_3 symbol + ...
+```
 
-The offset coefficient is fixed at 1. The model does not estimate it.
+If I include territory as a control, the model estimates the age effect while accounting for territory. That helps isolate the age effect from the territory effect.
+
+The tradeoff is that controls can fight with other variables for the same signal. Large categorical controls can be especially tricky because they may overlap with many other predictors. The model can become harder to interpret, standard errors can inflate, and the coefficient of interest may look weaker than expected.
+
+That does not mean controls are bad. It just means they are not free.
+
+## What an offset does
+
+An offset is different because the model does not estimate its coefficient.
+
+If territory and symbol factors were estimated somewhere else, I can treat those effects as known. For example, I might adjust exposure by multiplying it by known territory and symbol factors:
+
+```text
+u_adjusted = u * tau_i * sigma_j
+```
+
+where:
+
+- `u` is the original exposure
+- `tau_i` is the territory factor
+- `sigma_j` is the symbol factor
+
+In a log-link model, the same idea can be written as an offset:
+
+```text
+log(E[Y]) = X beta + log(tau_i * sigma_j)
+```
+
+If I am also modeling claim counts with exposure, the offset may include exposure too:
+
+```text
+log(E[claim_count]) = X beta + log(exposure) + log(tau_i * sigma_j)
+```
+
+The key is that the offset enters with a fixed coefficient of 1.
+
+```text
+coefficient on offset = 1
+```
+
+The model is not being asked, "What is the territory effect?" It is being told, "Use this adjustment, then estimate the remaining effects."
+
+That can be cleaner when the adjustment is already known, approved, or intentionally fixed.
 
 ## Control vs. offset
 
-A control is conditional residualization. The model estimates the control and the main predictors jointly, so they can compete for shared variation.
+I think of controls as conditional adjustment.
 
-An offset is structural residualization. The known effect is removed or accounted for before the remaining predictors are estimated.
+```text
+Estimate:
+log(E[Y]) = beta_0 + beta_1 X + beta_2 control
+```
 
-That makes offsets useful when a factor is already known or deliberately fixed. Controls are better when the effect needs to be estimated from the data.
+The model estimates the control and the main predictor together. If they share signal, they compete for it.
 
-## Practical takeaway
+Offsets are structural adjustment.
 
-If the factor is unknown and should be learned, use a control.
+```text
+Estimate:
+log(E[Y]) = beta_0 + beta_1 X + offset
+```
 
-If the factor is known, approved, or intentionally fixed from another analysis, an offset can be cleaner.
+The control effect has already been removed or built in before estimating the remaining coefficients.
 
-The choice is not just technical. It changes coefficient interpretation, stability, and how much the model is allowed to revise existing business structure.
+That distinction is why offsets can be useful when a control variable would create severe multicollinearity. Since the offset coefficient is not estimated, it does not fight with the other predictors in the same way.
+
+## How I would decide
+
+If the effect needs to be learned from the current data, I would use a control.
+
+If the effect is already known or should remain fixed, I would consider an offset.
+
+The choice changes more than the formula. It changes what the model is allowed to learn, how coefficients should be interpreted, and whether the model can revise an existing business structure.

@@ -6,117 +6,152 @@ category: "Data Science"
 tags: ["Tweedie", "GLM", "Insurance"]
 ---
 
-Tweedie GLMs are useful in insurance because many insurance targets are nonnegative, skewed, and have a mass at zero.
+In insurance, the target often has an awkward shape. Many policies have zero loss. The policies that do have loss are positive, skewed, and sometimes very large. That is not a clean normal target, and it is not just a simple count either.
 
-A policy may have no claim at all. If it does have a claim, the loss amount is positive and often right-skewed. That mixture is exactly why pure premium and loss ratio modeling can be difficult.
+Tweedie is useful because it is built for data that is nonnegative, right-skewed, and contains exact zeros.
 
-## Compound Poisson-gamma intuition
+## The insurance intuition
 
 For power parameters between 1 and 2, the Tweedie distribution can be understood as a compound Poisson-gamma process.
 
-The number of events follows a Poisson process. The amount of loss for each event follows a gamma distribution. Total loss is the sum of those losses.
+That means two random things are happening:
 
-<div class="math-block">
+- the number of claims follows a Poisson process
+- the size of each claim follows a gamma distribution
+
+Written as a formula:
+
+```text
 N ~ Poisson(lambda)
-X_i ~ Gamma(...)
+X_i ~ Gamma(alpha, theta)
+
 Y = sum_{i=1}^{N} X_i
-</div>
+```
 
-If `N = 0`, then total loss is zero. If `N = 1`, total loss follows a gamma severity. If `N = 5`, total loss is the sum of five gamma severities. Since `N` itself is random, Tweedie becomes a Poisson-distributed sum of gamma distributions.
+If there are no claims, total loss is zero:
 
-That gives Tweedie a natural insurance interpretation:
+```text
+If N = 0, then Y = 0
+```
 
-- frequency comes from the event count
-- severity comes from the claim amount
-- pure premium combines both
+If there is one claim, total loss is one gamma-like severity. If there are several claims, total loss is the sum of those severities.
 
-## Mean and variance
+That is why Tweedie fits pure premium thinking so naturally. Pure premium is already combining frequency and severity.
 
-The Tweedie GLM is built around the conditional mean:
+```text
+Pure premium = frequency * severity
+```
 
-<div class="math-block">
-mu = E[Y | X]
-</div>
+Tweedie gives one model for the total loss outcome directly.
 
-and the variance function:
+## The mean-variance relationship
 
-<div class="math-block">
+The important GLM assumption is that variance grows as a power of the mean:
+
+```text
+E[Y] = mu
 Var(Y) = phi * mu^p
-</div>
+```
 
-where `phi` is the dispersion parameter and `p` is the power parameter.
+The power parameter `p` controls the shape:
 
-The power parameter controls the shape of the distribution:
+```text
+p = 0  -> Normal-like variance
+p = 1  -> Poisson
+1 < p < 2 -> Compound Poisson-gamma
+p = 2  -> Gamma
+p = 3  -> Inverse Gaussian
+```
 
-- `p = 0`: normal
-- `p = 1`: Poisson
-- `p = 2`: gamma
-- `p = 3`: inverse Gaussian
+For pure premium, the useful range is usually between 1 and 2. That range is what gives Tweedie the mix of exact zeros and positive continuous values.
 
-For insurance pure premium modeling, the useful range is usually between 1 and 2 because the response has both zero mass and positive continuous values.
+I also like the coefficient-of-variation intuition from my notes. When the gamma severity part has a very small coefficient of variation, the Tweedie behavior moves closer to Poisson-like. When severity is much more variable, the behavior moves closer to gamma-like.
 
-## Log link interpretation
+## Why the log link feels natural
 
 Tweedie GLMs often use a log link:
 
-<div class="math-block">
-log(mu) = X beta
-</div>
+```text
+log(mu_i) = X_i beta
+mu_i = exp(X_i beta)
+```
 
-The log link keeps predictions positive and makes effects multiplicative. That is intuitive in pricing contexts: a coefficient can act like a factor adjustment on expected loss rather than an additive shift that could produce negative predictions.
+I like the log link in this context because it keeps predictions positive and makes effects multiplicative.
 
-## Power parameter
+For a coefficient `beta_j`, a one-unit increase in `X_j` changes expected loss by a multiplicative factor:
 
-The power parameter usually needs to be specified before fitting the model. In practice, many modelers choose values such as 1.5, 1.6, 1.67, or 1.7 based on the target distribution and modeling convention.
+```text
+mu_new / mu_old = exp(beta_j)
+```
 
-There are algorithms that search for an optimal `p`, but small differences in the power parameter may not materially change model estimates in many applied settings.
+In pricing work, multiplicative effects are easier to think about than additive effects. A coefficient behaves more like a discount, surcharge, or rating factor adjustment.
 
-## Tweedie vs. frequency-severity
+## Why the density is awkward
 
-Frequency-severity modeling can provide more detail because it separates claim occurrence from claim size. That is useful when the drivers of frequency and severity behave differently.
+One technical detail I found interesting: for Tweedie with `1 < p < 2`, the density does not have a simple closed form. It is usually expressed as an infinite series.
 
-A variable might reduce frequency but increase severity. A pure premium model can hide that because the effects may cancel out.
+That matters because it affects how software fits the model.
 
-Tweedie is simpler because it models the combined target directly. This can reduce noise and avoid building two separate models, but it carries an assumption: predictors tend to move frequency and severity in the same direction.
+In many implementations, the main coefficient estimation does not require directly optimizing a neat closed-form Tweedie likelihood. Instead, the GLM can be fit using quasi-likelihood ideas that rely on the mean-variance relationship:
 
-That assumption is not always true. A feature can increase frequency but decrease severity, or the reverse.
+```text
+Var(Y_i) = phi * mu_i^p
+```
 
-## Optimization note
+The fitting algorithm can use IRLS, or iteratively reweighted least squares. At each step, the model solves a weighted least squares problem:
 
-For Tweedie GLMs with `1 < p < 2`, the probability density does not have a closed-form expression. It is expressed as an infinite series.
+```text
+beta_new = (X' W X)^(-1) X' W z
+```
 
-Because of this, implementations do not always optimize the full Tweedie likelihood directly for the main coefficient fitting step. They can rely on quasi-likelihood, which only needs the mean-variance relationship:
+For Tweedie with a log link, the working weights depend on the mean and the variance power. A simplified way to remember the variance part is:
 
-<div class="math-block">
-V(mu) = phi * mu^p
-</div>
+```text
+W_i is related to 1 / mu_i^p
+```
 
-Statsmodels uses the IRLS framework for GLMs. At a high level:
+After convergence, dispersion can be estimated from deviance or Pearson residuals. The exact density or series approximation may matter for likelihood-based inference, but the coefficient fitting can lean heavily on the GLM mean-variance structure.
 
-1. Start with initial coefficients.
-2. Compute the predicted mean.
-3. Compute working weights based on the variance function.
-4. Solve a weighted least-squares problem.
-5. Repeat until convergence.
+That is why tools like Statsmodels can fit Tweedie GLMs through the GLM framework, and tools like H2O can fit regularized Tweedie models efficiently with IRLS-style outer loops and optimized inner solvers.
 
-The working weights reflect the Tweedie variance structure:
+## Severity vs. frequency
 
-<div class="math-block">
-W_i proportional to 1 / mu_i^p
-</div>
+Tweedie models pure premium directly. That is convenient, but it also means frequency and severity are blended.
 
-After convergence, the dispersion parameter can be estimated using deviance or Pearson residuals.
+The hidden assumption is that predictors tend to move frequency and severity in a compatible direction. Sometimes that is reasonable. Sometimes it is not.
 
-## H2O optimization
+A variable might increase claim frequency but decrease severity. Or it might barely affect frequency but strongly affect severity. If I only model pure premium, those stories can get blurred.
 
-H2O GLM follows the same broad quasi-likelihood and IRLS idea, but its inner optimization is designed for speed.
+Separate frequency and severity models often give more diagnostic insight:
 
-The outer loop updates working weights and working responses. The inner loop solves the weighted least-squares problem using tools such as coordinate descent for LASSO or elastic net, or Gram-matrix solvers for ridge and unpenalized GLM.
+```text
+Frequency model:
+E[claim_count] or E[claim_count / exposure]
 
-The important point is that the infinite-series Tweedie density is not the main engine used to optimize standard coefficients. It is more relevant for optional inference tasks such as estimating dispersion by maximum likelihood, computing p-values, or handling collinearity diagnostics.
+Severity model:
+E[claim_amount | claim occurred]
 
-## Why it matters
+Pure premium:
+frequency * severity
+```
 
-Tweedie GLMs are not magic. But they match a common insurance data shape: many zeros, positive continuous losses, skewness, and a mean-variance relationship that grows with expected loss.
+The tradeoff is that separate models require more moving parts. Tweedie gives a strong one-model baseline when the target shape is the main issue.
 
-That makes them a practical baseline for insurance pricing and loss cost modeling.
+## Choosing the power parameter
+
+The power parameter `p` is important, but I do not think of it as something that always needs obsessive tuning.
+
+In practice, people often start with values like `1.5`, `1.6`, `1.67`, or `1.7` depending on the target and domain. Some software can estimate or search over `p`, but small changes in `p` may not materially change the business conclusion.
+
+What matters more is whether the model structure matches the target:
+
+- exact zeros are meaningful
+- positive outcomes are continuous and skewed
+- variance increases with the mean
+- pure premium is a reasonable target to model directly
+
+## Why I care
+
+Tweedie GLMs are not a perfect answer to insurance modeling. But they are a very useful baseline because they match a common insurance target shape: many zeros, positive losses, skewness, and variance that grows with expected loss.
+
+The main caution is interpretability. Tweedie can be practical and elegant, but it can also hide whether a variable is acting through frequency, severity, or both. That is the part I would always check before treating the model as the final story.

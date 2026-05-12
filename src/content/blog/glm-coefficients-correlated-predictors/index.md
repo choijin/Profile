@@ -1,71 +1,151 @@
 ---
-title: "Understanding GLM Coefficients When Predictors Are Correlated"
+title: "Understanding GLM Coefficients"
 description: "How GLM coefficients are interpreted, and why correlated predictors can make that interpretation unstable."
 date: "2026-05-12"
 category: "Data Science"
 tags: ["GLM", "Coefficients", "Multicollinearity"]
 ---
 
-In a generalized linear model, the fitted surface represents the conditional mean of the response:
+One thing that took me a while to internalize about GLMs is that the model is not trying to predict one exact observed outcome.
 
-<div class="math-block">
+It is modeling the expected value of the response, conditional on the predictors. The coefficient does not describe what must happen to one individual observation. It describes how the conditional mean moves inside the structure of the model.
+
+```text
 mu(x) = E[Y | X = x]
-</div>
+g(mu_i) = eta_i = X_i beta
+```
 
-The coefficient vector determines how predictors influence that conditional mean through the link function:
+That small distinction matters a lot. A GLM coefficient lives on the link scale first. Only after applying the inverse link does it become a statement about the expected response on the original target scale.
 
-<div class="math-block">
-g(mu_i) = X_i beta
-</div>
+## The coefficient is on the link scale
 
-The model does not predict a single realized outcome for a given input. It assumes a conditional distribution for the response and estimates coefficients so the observed data is likely under that distribution.
+For a continuous variable, a coefficient is the change in the link-transformed expected response for a one-unit increase in that variable, holding the other variables fixed.
 
-## Continuous predictors
+With a log link, the model is working with the log of the conditional mean:
 
-For a continuous predictor, the coefficient describes the change in the transformed conditional mean for a one-unit change in the predictor.
+```text
+log(E[Y | X]) = beta_0 + beta_1 X_1 + ... + beta_p X_p
+```
 
-With a log link:
+So if `beta_j = 0.10`, a one-unit increase in `X_j` adds `0.10` to the log expected response. On the original mean scale, that becomes multiplicative:
 
-<div class="math-block">
-eta = log(E[Y | X])
-</div>
-
-A one-unit increase in `X_j` changes log expected response by `beta_j`. On the mean scale, exponentiating the coefficient gives a multiplicative effect:
-
-<div class="math-block">
+```text
 E[Y | X_j + 1] / E[Y | X_j] = exp(beta_j)
-</div>
 
-That multiplicative interpretation is one reason log links are common in pricing and severity models.
+exp(0.10) = 1.105
+```
 
-## Categorical predictors
+So the expected response is multiplied by about `1.105`, or increased by about `10.5%`, holding the other variables fixed.
 
-For a categorical variable, each dummy coefficient is interpreted relative to a reference level.
+This is why log links feel natural in pricing, frequency, severity, and pure premium work. The coefficient behaves more like a factor adjustment than a raw additive bump.
 
-If color has levels Red and Blue, with Red as the reference:
+## Categorical coefficients are relative
 
-<div class="math-block">
-beta_blue = link(E[Y | Color = Blue]) - link(E[Y | Color = Red])
-</div>
+Categorical coefficients have a small trap: they are always relative to a reference group.
 
-With multiple categorical variables, the baseline is the joint reference category. For example, if Region = North and Color = Red are both references, then a South coefficient is interpreted as the difference from North while holding the other variables at their reference or specified values.
+If `A` is the reference category and `B` is included as a dummy variable, the coefficient for `B` is:
 
-## Why multicollinearity matters
+```text
+beta_B = link(E[Y | category = B]) - link(E[Y | category = A])
+```
 
-Multicollinearity is partly a matrix problem. In OLS, the model depends on inverting `X'X`; in GLMs, the fitting process depends on matrices like `X'WX`. If columns in `X` are linearly dependent, the matrix becomes singular. If they are nearly dependent, the inverse becomes unstable.
+With a log link, that becomes a ratio on the mean scale:
 
-The practical result is inflated standard errors and unstable coefficient estimates. A variable can have a real relationship with the target but still receive a high p-value because its standard error is large. Small changes to the data or model specification can also cause large swings in coefficient estimates.
+```text
+E[Y | B] / E[Y | A] = exp(beta_B)
+```
 
-This is why multicollinearity hurts interpretation more than prediction. Correlated predictors can still produce stable fitted values because the shared signal may be spread across variables. But the individual coefficients can become fragile.
+The reference level is absorbed into the intercept. With several categorical variables, the intercept becomes a joint baseline: for example, North region, Red color, base class, and whatever other reference levels are present.
 
-## Why correlation changes the story
+That means every categorical coefficient is a movement away from that baseline, not an absolute standalone effect. This sounds obvious, but it becomes easy to lose track of when a model has many dummies.
 
-When predictors overlap, the model is trying to assign shared signal across multiple columns. The fitted prediction may remain stable, but the individual coefficients can become unstable.
+## Correlated predictors make interpretation fragile
 
-That means coefficient interpretation should be more cautious when predictors are strongly correlated. A sign flip, unexpectedly large coefficient, or high standard error may be a symptom of the design matrix rather than a meaningful business effect.
+The interpretation gets harder when predictors are correlated.
 
-## How I think about it
+At a high level, multicollinearity means two or more variables carry overlapping information. The model may still predict well, but it becomes harder to tell which variable deserves credit for the shared signal.
 
-When the goal is prediction, multicollinearity is not always a reason to remove variables. When the goal is interpretation, pricing, or model explanation, it matters more.
+Suppose the true relationship is something like:
 
-I would usually check coefficient stability, standard errors, VIF, condition number, and whether signs or magnitudes change under small perturbations. If the coefficient itself is part of the business explanation, it needs to be stable enough to trust.
+```text
+Y = aX + bZ + error
+```
+
+If `X` and `Z` move together, the model has trouble separating the effect of `X` from the effect of `Z`. Several coefficient combinations can produce similar fitted values.
+
+That is why multicollinearity is often more dangerous for explanation than for prediction. The fitted mean can stay stable while individual coefficients become sensitive to small changes in the data, sampling, or model specification.
+
+## The matrix version of the problem
+
+The technical version is matrix inversion.
+
+In OLS, the coefficient estimate depends on inverting `X'X`:
+
+```text
+beta_hat = (X'X)^(-1) X'Y
+```
+
+In GLMs, the fitting process uses weighted versions of the same idea, often involving a matrix like:
+
+```text
+X' W X
+```
+
+If columns in the design matrix are perfectly linearly dependent, the matrix is singular. If they are almost linearly dependent, the inverse can become unstable.
+
+That instability shows up in the coefficients. A small change in the data can cause a large change in an individual coefficient estimate, even when predictions barely move.
+
+## Why standard errors inflate
+
+The standard error formula makes the same point from another angle.
+
+For a single coefficient in an OLS-style setting, the standard error is related to how much of that predictor can be explained by the other predictors:
+
+```text
+SE(beta_j) = sigma / sqrt(n * Var(X_j) * (1 - R_j^2))
+```
+
+Here, `R_j^2` comes from regressing `X_j` on the other predictors.
+
+As `R_j^2` approaches 1, the term `(1 - R_j^2)` approaches 0. The denominator shrinks, and the standard error grows. That is the statistical version of the model saying: I cannot confidently isolate this variable from the others.
+
+This is where inflated standard errors, wider confidence intervals, unstable p-values, and flipped signs can appear. A sign flip does not always mean the variable has the opposite business effect. Sometimes it means the model is overcompensating across correlated predictors.
+
+## When I would worry less
+
+I would not automatically drop a variable just because it is correlated with another variable.
+
+There are cases where high correlation is less alarming:
+
+- The model is mainly for prediction, not explanation.
+- The high VIF belongs to a control variable, not the coefficient I plan to interpret.
+- The collinearity comes from powers or interactions, like `x` and `x^2`.
+- The issue is caused by dummy variables from a categorical feature with several levels.
+
+In those cases, I would still inspect the model, but I would not treat multicollinearity as an automatic failure.
+
+## What I would check
+
+Pearson correlation is a starting point, but it is not enough. Multicollinearity can involve several variables at once, not just one pair.
+
+The checks I would use are:
+
+- VIF, especially for coefficients I plan to interpret.
+- Standard errors and confidence intervals.
+- Coefficient signs and whether they make sense.
+- Stability under small data or specification changes.
+- Condition number of the design matrix.
+
+The condition number is another way of asking whether the matrix is close to singular:
+
+```text
+kappa(X) = sigma_max / sigma_min
+```
+
+where `sigma_max` and `sigma_min` are the largest and smallest singular values of `X`. A large condition number means the matrix is ill-conditioned. In practice, values above something like `30` are often treated as a warning sign.
+
+## The practical takeaway
+
+GLM coefficients are interpretable, but only inside the structure of the model.
+
+If predictors overlap heavily, the model can still produce useful fitted values. What becomes delicate is the story attached to one coefficient. Before I use a coefficient as a business explanation, I want to know whether that coefficient is actually stable, or whether it is just one of many ways the model could have divided up shared signal.

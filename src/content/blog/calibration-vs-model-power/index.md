@@ -6,43 +6,48 @@ category: "Data Science"
 tags: ["Calibration", "Model Evaluation", "Risk"]
 ---
 
-Model power and calibration are related, but they are not the same thing.
+Calibration and model power are related, but they are not the same thing.
 
-A powerful model separates high-risk and low-risk observations well. A calibrated model produces probabilities that match observed frequencies.
+This distinction matters because a model can be very good at ranking risk and still produce probabilities that I should not trust at face value.
 
-For example, if a model predicts a 20 percent probability of default for a group of firms, roughly 20 percent of those firms should default if the model is calibrated.
+That took me a while to fully appreciate. Ranking and probability accuracy feel similar at first, but they answer different questions.
 
-## Power
+## Power is about separation
 
-Power is about discrimination. In binary classification, a powerful model ranks true positives above true negatives. Metrics like AUROC, Gini, lift, and precision-recall curves are usually measuring some version of ranking quality.
+When I say a model is powerful, I mean it separates high-risk and low-risk observations well.
 
-A model can be powerful even if its probabilities are too extreme or too conservative. It may order risks correctly but assign unreliable probability levels.
+In a binary classification setting, a powerful model tends to rank true positives above true negatives. Metrics like AUROC, Gini, lift, and precision-recall curves are usually measuring some form of this ranking ability.
 
-## Calibration
+A model can be powerful even if its probabilities are too extreme or too conservative. It may know who is riskier, but still be wrong about how risky they are.
 
-Calibration is about probability accuracy. The predicted probabilities should align with observed outcomes.
+## Calibration is about probability accuracy
 
-Calibration curves usually sort predictions into buckets. For each bucket, we compare the average predicted probability with the observed event rate.
+Calibration asks whether predicted probabilities line up with observed frequencies.
 
-If the curve is above the 45-degree line, the model is underpredicting the event rate. If the curve is below the line, it is overpredicting.
+If a model assigns a group of observations a 20 percent probability of default, then roughly 20 percent of that group should actually default. If 35 percent default, the model was underpredicting. If 10 percent default, it was overpredicting.
 
-## Why the distinction matters
+That is a different kind of quality than ranking.
 
-In many business settings, the decision is not only who is riskier. The size of the probability matters.
+## Why it matters in practice
 
-For lending, insurance, and pricing, a model's probability can affect expected loss, premium, cutoff decisions, or capital allocation. Ranking is important, but probability scale matters too.
+In some problems, ranking is enough. If I only need to prioritize the top 5 percent for review, discrimination may be the main concern.
 
-## Calibration techniques
+But in lending, insurance, pricing, and risk modeling, the probability level matters. A predicted probability can feed into expected loss, premium, cutoff decisions, or capital allocation.
 
-Two common approaches are:
+In those settings, a model that ranks well but is poorly calibrated can still lead to bad decisions.
 
-- Platt scaling, which fits a logistic regression model on top of model scores.
-- Isotonic regression, which fits a more flexible non-decreasing calibration function.
+## Calibration is not magic
 
-Platt scaling is simpler and works well when the calibration error has a sigmoid-like shape. Isotonic regression is more flexible, but can overfit on smaller datasets.
+Calibration can adjust the probability scale. Platt scaling fits a logistic regression on top of model scores. Isotonic regression fits a more flexible monotonic mapping.
 
-## The key point
+These methods can make probabilities more reliable, but they do not create new signal.
 
-A weak model cannot become powerful through calibration alone. Calibration can improve probability reliability, but it does not create new discriminatory signal.
+A weak model cannot become powerful just because it is calibrated. Calibration can fix the scale, but it cannot invent separation that the model never learned.
 
-The best model for decision-making usually needs both: enough power to rank risk and enough calibration to make the predicted probabilities meaningful.
+## The way I remember it
+
+Power answers: can the model separate risk?
+
+Calibration answers: can I trust the probability number?
+
+For decision-making, I usually want both. A model should rank risks well enough to be useful, and its predicted probabilities should be close enough to reality that the downstream decisions make sense.

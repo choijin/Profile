@@ -6,196 +6,242 @@ category: "Data Science"
 tags: ["GLM", "Distributions", "Statistics"]
 ---
 
-Choosing a GLM distribution is really choosing what kind of response variable you believe you are modeling.
+When I first learned GLMs, I treated the distribution choice like a menu: binomial for classification, Poisson for counts, gamma for severity, and so on.
 
-The distribution defines the support of the response, the shape of the conditional response, and the mean-variance relationship the model expects.
+That is not wrong, but it is a little too shallow. The more useful way to think about it is this: the distribution describes what kind of response variable I believe I am modeling, and how the variance should behave as the expected value changes.
 
-In GLM notation, the model focuses on the conditional mean:
+The model is still centered around the conditional mean:
 
-<div class="math-block">
+```text
 mu_i = E[Y_i | X_i]
-</div>
-
-and connects that mean to predictors through a link function:
-
-<div class="math-block">
 g(mu_i) = X_i beta
-</div>
+```
 
-The distribution then controls how the variance behaves around that mean.
+The distribution tells the model what kind of randomness lives around that mean.
 
 ## Binomial
 
-The binomial distribution models the number of successes in a fixed number of independent trials, where each trial has two possible outcomes and the probability of success is constant.
+The binomial distribution is for successes out of a fixed number of trials.
 
-<div class="math-block">
+```text
 Y ~ Binomial(n, p)
-</div>
 
-The mean and variance are:
-
-<div class="math-block">
 E[Y] = np
 Var(Y) = np(1 - p)
-</div>
+```
 
-When `n = 1`, the binomial becomes the Bernoulli distribution. A binomial GLM with a logit link is logistic regression.
+When `n = 1`, it becomes the Bernoulli distribution. That is the setup behind logistic regression: one observation, one event that either happens or does not happen.
 
-The linear predictor can take any real value, so we need a link function that maps probabilities from `(0, 1)` to `(-infinity, infinity)`. The logit link does that by modeling log-odds:
+```text
+Y ~ Bernoulli(p)
 
-<div class="math-block">
-log(p / (1 - p)) = X beta
-</div>
+E[Y] = p
+Var(Y) = p(1 - p)
+```
 
-At any value of `X`, the model predicts a binomial distribution with a certain probability of success.
+The reason we need a logit link is that the linear predictor can be any real number, but a probability has to stay between 0 and 1. The logit transforms probability into log-odds, so the model can work on an unbounded scale.
+
+```text
+logit(p) = log(p / (1 - p)) = X beta
+
+p = exp(X beta) / (1 + exp(X beta))
+```
+
+That is the key mental shift for me: logistic regression is not directly modeling the probability on the raw scale. It is modeling log-odds, then mapping back to probability.
+
+The assumptions I would keep in mind are: observations are independent, the outcome is conditionally binomial, and the relationship is linear on the log-odds scale.
 
 ## Poisson
 
-The Poisson distribution is used for count data: the number of events occurring in a fixed interval of time, space, or exposure.
+Poisson is for counts: number of claims, number of calls, number of events in a fixed interval of time, space, or exposure.
 
-<div class="math-block">
+```text
 Y ~ Poisson(lambda)
+
 E[Y] = lambda
 Var(Y) = lambda
-</div>
+```
 
-In insurance, the random variable might be claim count. The model predicts a continuous conditional mean even though the observed response is discrete.
+In a GLM, we usually write the conditional mean as `mu_i`:
 
-For claim frequency, the common GLM setup is to use claim count as the target and include exposure as an offset:
+```text
+Y_i ~ Poisson(mu_i)
+log(mu_i) = X_i beta
+```
 
-<div class="math-block">
-log(E[claim count]) = X beta + log(exposure)
-</div>
+The strict Poisson assumption is that the mean and variance are equal. That is elegant, but real data often refuses to be that tidy.
 
-The strict Poisson assumption is that variance increases linearly with the mean. In real claim frequency data, variance is often greater than the mean. That is overdispersion.
+In insurance frequency modeling, I would usually model claim count as the target and use exposure as an offset:
 
-Overdispersion can come from unobserved heterogeneity. For example, if risky and safe policyholders are pooled together but modeled with one Poisson rate, the observed variance will be too large for a simple Poisson model.
+```text
+log(E[claim_count_i]) = X_i beta + log(exposure_i)
+```
 
-If overdispersion is ignored, standard errors and p-values can be distorted.
+This lets the model estimate count while still accounting for the amount of risk observed. The model may predict a continuous expected count, even though the observed target is discrete.
+
+The issue I keep in mind is overdispersion.
+
+```text
+Overdispersion:
+Var(Y) > E[Y]
+```
+
+If the variance is larger than the mean, the simple Poisson model is understating the amount of variability in the data. That can make standard errors and p-values look more confident than they should. I would check this with sample mean versus variance, Pearson residuals, deviance residuals, and residual patterns against fitted values.
 
 ## Negative binomial
 
-The negative binomial distribution is often used for count data when variance exceeds the mean.
+Negative binomial is one way to handle overdispersed count data.
 
-One way to understand it is as a Poisson model where the rate itself varies across observations:
+The intuition I like is that the Poisson rate itself varies across observations. Instead of assuming every policyholder has a fixed rate from one clean process, the negative binomial allows extra heterogeneity.
 
-<div class="math-block">
-Y | theta ~ Poisson(theta)
-theta ~ Gamma(...)
-</div>
+One common variance form is:
 
-The result is a count distribution with extra variance:
-
-<div class="math-block">
+```text
+E[Y] = mu
 Var(Y) = mu + alpha * mu^2
-</div>
+```
 
-In insurance frequency modeling, the target should be claim count, not frequency. Use claim count as the response and `log(exposure)` as an offset.
+When `alpha = 0`, this collapses toward the Poisson variance relationship. As `alpha` increases, the variance grows beyond the mean.
 
-That matters because the negative binomial variance structure does not scale cleanly when counts are divided by exposure into rates. The count-plus-offset setup preserves the intended distributional assumptions.
+For insurance frequency, the important detail is that the target should still be a count, not a rate. Use claim count as the target and `log(exposure)` as the offset.
+
+```text
+log(E[claim_count_i]) = X_i beta + log(exposure_i)
+```
+
+That matters because the negative binomial variance is not a pure power variance in the same way as Poisson, gamma, or Tweedie GLMs. Dividing the count by exposure can break the distributional assumptions. The count-plus-offset setup respects the count process better.
 
 ## Gamma
 
-The gamma distribution is useful for positive continuous outcomes that are skewed to the right.
+Gamma is useful for positive continuous outcomes that are right-skewed.
 
-It has a lower bound at zero, a sharp peak, and a long right tail. These are common characteristics of claim severity, which is why gamma is widely used for severity modeling.
+That makes it a natural candidate for severity. Claim amounts are bounded below by zero, often concentrated at smaller values, and can have a long right tail.
 
-In GLM form, the gamma distribution is often parameterized by its mean and dispersion rather than directly by shape and scale:
+```text
+Y ~ Gamma(shape = alpha, scale = theta)
 
-<div class="math-block">
+E[Y] = alpha * theta
+Var(Y) = alpha * theta^2
+```
+
+In GLM form, I usually think about the mean-variance relationship:
+
+```text
 E[Y] = mu
 Var(Y) = phi * mu^2
-</div>
+```
 
-This variance function is useful because higher expected severity is allowed to have higher variance. A log link is common because it keeps predictions positive and makes effects multiplicative.
+That quadratic variance relationship is useful because higher expected severity should usually come with higher variability too.
+
+A log link also feels natural here:
+
+```text
+log(mu_i) = X_i beta
+mu_i = exp(X_i beta)
+```
+
+It keeps predictions positive and makes coefficient effects multiplicative.
 
 ## Inverse Gaussian
 
-The inverse Gaussian distribution is also positive and right-skewed, but it has a sharper peak and wider tail than gamma.
+Inverse Gaussian is also positive and right-skewed, but it has a sharper peak and a heavier tail than gamma.
 
-It can be appropriate when severity is expected to be more extremely skewed.
+I think of it as something to consider when severity is more extremely skewed and variance grows faster than the gamma relationship would suggest.
 
-Its GLM variance relationship grows faster than gamma:
+The GLM variance relationship is:
 
-<div class="math-block">
+```text
+E[Y] = mu
 Var(Y) = phi * mu^3
-</div>
+```
 
-A practical diagnostic is to group the data, calculate empirical mean and variance within each group, and examine how variance grows with the mean.
-
-If variance grows roughly quadratically, gamma may fit better. If variance grows more explosively, inverse Gaussian may be worth considering.
+That cubic relationship is the main practical clue. If I group the data, calculate empirical mean and variance within each group, and variance grows roughly quadratically with the mean, gamma may be reasonable. If variance grows more explosively, inverse Gaussian may be worth a look.
 
 ## Chi-square
 
-The chi-square distribution is not usually chosen as a response distribution for everyday GLMs. It shows up in inference.
+Chi-square is different from the others in this list because I do not usually think of it as the response distribution I am choosing for a GLM.
 
-A chi-square random variable with `k` degrees of freedom is a sum of squared independent standard normals:
+I think of it as an inference distribution.
 
-<div class="math-block">
+```text
+If Z_1, Z_2, ..., Z_k are independent standard normal variables:
+
 chi^2_k = Z_1^2 + Z_2^2 + ... + Z_k^2
-</div>
 
-In classical linear models, chi-square results arise from quadratic forms of normal vectors. In GLMs, chi-square shows up asymptotically through likelihood theory.
+E[chi^2_k] = k
+Var(chi^2_k) = 2k
+```
 
-For nested GLMs, Wilks' theorem justifies comparing deviance differences:
+It is also a special case of the gamma distribution, which is a nice connection to remember.
 
-<div class="math-block">
-Delta D = 2(log L_full - log L_reduced) ~ chi^2_q
-</div>
+In GLMs, chi-square logic shows up through likelihood theory. When comparing nested models, the deviance difference can be compared against a chi-square distribution under regularity conditions:
 
-where `q` is the number of additional parameters.
+```text
+Delta D = 2 * (log L_full - log L_reduced)
 
-This is the theoretical basis for likelihood ratio tests and drop-in-deviance tests.
+Delta D ~ chi^2_q
+```
+
+where `q` is the difference in the number of parameters.
+
+So for me, chi-square sits more in the model comparison and inference toolbox than in the "what is my target variable?" toolbox.
 
 ## Tweedie
 
-The Tweedie family is useful when the response is nonnegative, has many zeros, and has positive continuous values when nonzero.
+Tweedie is the distribution that made the most sense to me once I connected it to insurance.
 
-This makes it attractive in insurance. Many policies have zero loss, but when a claim occurs, the amount is positive and right-skewed.
+It is useful when the response is nonnegative, has many zeros, and has positive continuous values when nonzero. That is exactly the shape of many pure premium or loss ratio targets.
 
-For power parameters between 1 and 2, Tweedie can be viewed as a compound Poisson-gamma process:
+Between power parameters 1 and 2, Tweedie can be understood as a compound Poisson-gamma process:
 
-<div class="math-block">
+```text
 N ~ Poisson(lambda)
-X_i ~ Gamma(...)
+X_i ~ Gamma(alpha, theta)
+
 Y = X_1 + X_2 + ... + X_N
-</div>
+```
 
-If `N = 0`, total loss is zero. If `N > 0`, total loss is a sum of gamma severities.
+If `N = 0`, then `Y = 0`. If `N = 1`, total loss is one gamma severity. If `N = 5`, total loss is the sum of five gamma severities.
 
-The mean-variance relationship is:
+The GLM variance relationship is:
 
-<div class="math-block">
+```text
+E[Y] = mu
 Var(Y) = phi * mu^p
-</div>
+```
 
-Different values of `p` connect Tweedie to familiar distributions:
+The power parameter `p` controls the variance behavior:
 
-- `p = 0`: normal
-- `p = 1`: Poisson
-- `p = 2`: gamma
-- `p = 3`: inverse Gaussian
+```text
+p = 0  -> Normal-like
+p = 1  -> Poisson
+1 < p < 2 -> Compound Poisson-gamma
+p = 2  -> Gamma
+p = 3  -> Inverse Gaussian
+```
 
-For pure premium or loss ratio, the common insurance range is between 1 and 2.
+That is why Tweedie is so appealing for pure premium. It gives one distributional framework for both claim occurrence and claim amount.
 
-## Tweedie vs. frequency-severity
+The limitation is that it blends frequency and severity together. If a predictor affects frequency and severity in opposite directions, a pure premium model can hide that. In that case, separate frequency and severity models may be more informative.
 
-Tweedie models the combined loss directly. Frequency-severity modeling splits the problem into how often claims happen and how large they are.
+## How I would choose
 
-The split can provide better insight. A variable might reduce frequency but increase severity. A pure premium model can hide that because the effects may cancel out.
+I would start with the shape of the target:
 
-Separate frequency and severity models can also reduce noise because each model is focused on a more specific target.
+- Binary event: binomial.
+- Count: Poisson or negative binomial.
+- Positive skewed severity: gamma or inverse Gaussian.
+- Nonnegative loss with many zeros: Tweedie.
+- Model comparison or deviance testing: chi-square logic.
 
-The Tweedie assumption is that predictors tend to move frequency and severity in the same direction. That can be useful, but it is not always true.
+Then I would ask a second question: how should variance grow with the mean?
 
-## The modeling question
+```text
+Poisson:          Var(Y) = mu
+Negative binomial: Var(Y) = mu + alpha * mu^2
+Gamma:           Var(Y) = phi * mu^2
+Inverse Gaussian: Var(Y) = phi * mu^3
+Tweedie:         Var(Y) = phi * mu^p
+```
 
-The practical question is not "which distribution is best?" in the abstract. It is:
-
-- Is the target binary, count, positive continuous, or zero-inflated continuous?
-- How does variance change as the mean changes?
-- Does the model need probabilities, counts, severities, or pure premium?
-- Does exposure need to be handled as an offset?
-- Are the assumptions useful enough for the business problem?
-
-That framing keeps distribution choice tied to the data-generating process instead of treating it like a menu of technical options.
+That second question is where distribution choice becomes more than a label. It becomes an assumption about the data-generating process.

@@ -6,38 +6,54 @@ category: "ML Systems"
 tags: ["Data Engineering", "Data Lake", "Warehouse"]
 ---
 
-A data lake and a data warehouse solve different problems.
+The tempting question is: if a data lake is cheaper, why not put everything there?
 
-A data lake stores large amounts of raw or semi-structured data cheaply. It is useful for ingestion, archival, replay, machine learning, and flexible exploration.
+That question sounds clever for about two seconds. Then real usage starts.
 
-A warehouse is designed for governed, structured, repeatable analytics. It gives analysts and business teams a place to query clean modeled data and get consistent answers.
+A data lake and a data warehouse solve different problems. The lake is good at storing large amounts of raw or semi-structured data. The warehouse is good at giving people clean, governed, repeatable answers.
 
-## Why not just use a lake?
+## Storage is not the only cost
 
-Storage cost is not the only thing a data platform optimizes for.
+A data lake is useful because it is flexible and cheap. It can hold raw files, logs, semi-structured data, historical snapshots, and data that may not have a clear use yet.
 
-If teams query raw files directly, logic gets duplicated, schemas drift, performance becomes unpredictable, and trust erodes. Cheap storage can become expensive if every downstream user has to rebuild the same cleaning and business logic.
+That is valuable for machine learning, replay, exploration, and long-term storage.
 
-Raw data is not the same as usable data.
+But cheap storage does not automatically mean cheap analytics.
+
+If every analyst has to query raw files and rebuild the same cleaning logic, the cost just moves somewhere else. It shows up as duplicated work, inconsistent definitions, slow queries, and low trust.
 
 ## The warehouse role
 
-A warehouse provides structure. It is where data becomes modeled, documented, governed, and easier to query.
+A warehouse is where data becomes usable for repeated consumption.
 
-This matters for reporting, dashboards, finance, product analytics, and leadership decisions. Those users need repeatable answers, not scavenger hunts across raw files.
+It provides structure, modeled tables, access control, performance, and consistent definitions. That matters when finance, product, leadership, or operations need the same answer to mean the same thing every time.
+
+Raw data is not trusted data. It may be valuable, but it is not automatically ready for dashboards, reporting, or business decisions.
+
+## ETL and ELT
+
+The lake-versus-warehouse discussion also connects to ETL and ELT.
+
+ETL transforms data before loading it into the serving layer. ELT loads data first, then transforms it where it lives.
+
+In larger systems, ELT often fits better because raw data can land quickly in a lake, then be transformed into curated tables for analytics.
+
+The important thing is not the acronym. It is keeping the ingestion layer, transformation logic, and consumption layer clear.
 
 ## Where lakehouse fits
 
 A lakehouse tries to bring warehouse-like table management to files in a lake.
 
-A simple mental model:
+The mental model I like is:
 
-- S3 stores the actual data files.
-- Iceberg defines how files form a table, including structure and snapshots.
-- Glue Catalog stores metadata about where tables live.
-- Athena or Spark queries the tables.
+```text
+S3 stores the actual data files.
+Iceberg defines how files form a table.
+Glue Catalog stores metadata about where the table is.
+Athena or Spark queries the table.
+```
 
-That gives the lake more structure without giving up the scalability of file-based storage.
+That adds structure, snapshots, and metadata to lake storage. It does not erase the warehouse/lake distinction completely, but it does make the lake more usable for analytical workloads.
 
 ## The practical split
 
@@ -45,6 +61,6 @@ The lake is where data lands.
 
 The warehouse is where data becomes usable.
 
-The lakehouse is an attempt to reduce the gap between the two by adding table semantics, metadata, and reliability to lake storage.
+The lakehouse tries to reduce the gap between the two.
 
-Good data engineering is not about choosing the cheapest layer. It is about designing the full system so data can be trusted and used.
+Good data engineering is not just optimizing for the cheapest storage layer. It is designing the system so data can be stored, transformed, trusted, queried, and reused without everyone rebuilding the same logic from scratch.
