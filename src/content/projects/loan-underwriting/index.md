@@ -2,7 +2,7 @@
 title: "Loan Underwriting"
 description: "A logistic regression model for predicting one-year probability of default and improving loan underwriting decisions."
 date: "2025-08-01"
-order: 2
+order: 1
 demoURL: "https://choijin.github.io/Loan_Underwriting/"
 repoURL: "https://github.com/choijin/Loan_Underwriting"
 ---

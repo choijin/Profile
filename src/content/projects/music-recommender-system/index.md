@@ -2,7 +2,7 @@
 title: "Music Recommender System"
 description: "A PySpark recommender system for large-scale music listening data stored in HDFS."
 date: "2025-06-01"
-order: 4
+order: 2
 demoURL: "https://choijin.github.io/Music_Recommender_System/"
 repoURL: "https://github.com/choijin/Music_Recommender_System"
 ---
