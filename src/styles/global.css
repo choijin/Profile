@@ -24,7 +24,8 @@ body {
 }
 
 header {
-  @apply py-8;
+  @apply sticky top-0 z-50 py-8;
+  @apply bg-neutral-50/85 backdrop-blur dark:bg-neutral-950/85;
 }
 
 main {
