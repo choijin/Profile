@@ -53,6 +53,12 @@ article {
     @apply text-black dark:text-white;
     @apply decoration-black/25 dark:decoration-white/50;
   }
+  article .math-block {
+    @apply my-6 overflow-x-auto rounded border border-black/10 bg-black/[0.03] px-4 py-3 font-mono text-sm leading-7 dark:border-white/15 dark:bg-white/[0.04];
+  }
+  article .math-inline {
+    @apply rounded bg-black/[0.04] px-1.5 py-0.5 font-mono text-sm dark:bg-white/[0.06];
+  }
 }
 
 .animate {
