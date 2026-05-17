@@ -157,10 +157,6 @@ Feature stores solve another consistency problem. They can help with feature man
 
 That last point is the big one for me. If training features are computed one way and production features another way, the model can fail even when the code looks correct.
 
-## My takeaway
+## Conclusion
 
-Production ML is a living system.
-
-Monitoring tells me when the world is changing. Continual learning decides how quickly the model should adapt. Testing in production gives evidence that a model is safe under real traffic. MLOps tools hold the pieces together so the system can be maintained.
-
-The model matters, but the system around the model determines whether it keeps mattering.
+If you have read up to this point, I hope it was somewhat informative. The main purpose of these three blogs was to retain what I learned from the book. I aspire to be a fullstack data scientist, and hope that understanding the ML system design is one step closer to that goal.
