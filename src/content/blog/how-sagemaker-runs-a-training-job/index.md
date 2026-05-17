@@ -71,10 +71,8 @@ container starts
 
 The cleanest way for me to remember SageMaker is:
 
-- Docker defines the runtime.
-- ECR stores the runtime.
+- Docker defines the environment and dependencies.
+- ECR stores the container image.
 - S3 passes data, config, and artifacts.
 - SageMaker runs the job on managed compute.
 - MLflow tracks what happened.
-
-Once those roles are clear, SageMaker feels less like magic. It is a controlled way to run reproducible training jobs without manually managing the underlying EC2 lifecycle every time.

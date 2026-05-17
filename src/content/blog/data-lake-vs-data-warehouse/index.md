@@ -6,11 +6,11 @@ category: "ML Systems"
 tags: ["Data Engineering", "Data Lake", "Warehouse"]
 ---
 
-The tempting question is: if a data lake is cheaper, why not put everything there?
+![lakehouse](lakehouse.png)
 
-That question sounds clever for about two seconds. Then real usage starts.
+When I first started learning about modern data architectures, I wondered: if data lakes are cheaper and scalable, why doesn’t every company just store everything there?
 
-A data lake and a data warehouse solve different problems. The lake is good at storing large amounts of raw or semi-structured data. The warehouse is good at giving people clean, governed, repeatable answers.
+Over time, I realized that data lakes and data warehouses are built for different purposes. Data lakes are optimized for storing massive amounts of raw data, while data warehouses focus on delivering structured, reliable, and repeatable answers for business users.
 
 ## Storage is not the only cost
 
@@ -51,16 +51,20 @@ S3 stores the actual data files.
 Iceberg defines how files form a table.
 Glue Catalog stores metadata about where the table is.
 Athena or Spark queries the table.
+
+[S3]               -> physical files
+[Iceberg]          -> table format + transaction layer
+[Glue Catalog]     -> table registry / metadata pointer
+[Athena/Spark]     -> query engine
 ```
 
 That adds structure, snapshots, and metadata to lake storage. It does not erase the warehouse/lake distinction completely, but it does make the lake more usable for analytical workloads.
 
 ## The practical split
 
-The lake is where data lands.
+- The lake is where data lands.
 
-The warehouse is where data becomes usable.
+- The warehouse is where data becomes usable.
 
-The lakehouse tries to reduce the gap between the two.
+- The lakehouse tries to reduce the gap between the two.
 
-Good data engineering is not just optimizing for the cheapest storage layer. It is designing the system so data can be stored, transformed, trusted, queried, and reused without everyone rebuilding the same logic from scratch.
