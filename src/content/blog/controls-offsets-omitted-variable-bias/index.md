@@ -6,17 +6,17 @@ category: "Data Science"
 tags: ["GLM", "Controls", "Offsets"]
 ---
 
-Controls and offsets are easy to group together because they both sound like ways of "adjusting" a model.
+Controls and offsets are concepts that were not taught at school for me, and something that I realized is quite important especially when working with GLMs. One of the main purposes of using a GLM is interpretability I think, and we want to make sure that the predictors of my interest are not picking up any unintended signals. It is quite common when you want to estimate the effect of certain variables, while making sure to partiallying out the impact of a known factor that we would not want to add to the model. This is 
 
-But they are not doing the same thing. The difference matters, especially in insurance models where some effects may already exist in a rating plan, while others are being estimated in the current model.
+Stated more formally, in regression analysis, control variables are included to account for factors that might influence the dependent variable but are not the primary focus of the study. Their inclusion helps ensure that the relationship between the primary independent variables (variables of interest) and the dependent variable is accurately estimated, without being distorted by these other factors.
 
-The way I think about it is this: a control is something the model is allowed to learn. An offset is something the model is told to accept.
+Offsets are similar to controls except that you fix a coefficient of 1. Using log link function, this means we can include in the denominator of the target (exposure * offset).The difference is that a control is something the model is allowed to learn, and an offset is something the model is told to accept (by fixing coefficient at 1).
 
 ## The omitted variable problem
 
 Suppose I am modeling claim frequency, and the candidate predictors include driver age, vehicle use, multiple-car status, territory, and symbol.
 
-Now imagine I drop territory from the model. If a particular territory has both higher claim frequency and a larger share of young drivers, driver age may start acting partly as a proxy for territory. The age coefficient is no longer just about age. It is absorbing some of the territory effect too.
+Now imagine I drop territory from the model. If a particular territory has both higher claim frequency and a larger share of young drivers, driver age may start acting partly as a **proxy** for territory. The age coefficient is no longer just about age. It is absorbing some of the territory effect too.
 
 In a simple linear setup, omitted variable bias is often written this way:
 
@@ -73,7 +73,7 @@ In a log-link model, the same idea can be written as an offset:
 log(E[Y]) = X beta + log(tau_i * sigma_j)
 ```
 
-If I am also modeling claim counts with exposure, the offset may include exposure too:
+If I am also modeling claim counts with exposure (frequency), the offset may include exposure too:
 
 ```text
 log(E[claim_count]) = X beta + log(exposure) + log(tau_i * sigma_j)
@@ -81,13 +81,7 @@ log(E[claim_count]) = X beta + log(exposure) + log(tau_i * sigma_j)
 
 The key is that the offset enters with a fixed coefficient of 1.
 
-```text
-coefficient on offset = 1
-```
-
-The model is not being asked, "What is the territory effect?" It is being told, "Use this adjustment, then estimate the remaining effects."
-
-That can be cleaner when the adjustment is already known, approved, or intentionally fixed.
+By adding the offset, which by algebra we are taking the offset factor's effect away from the target, we let the model focus on explaining the remaining signal.
 
 ## Control vs. offset
 
@@ -113,8 +107,4 @@ That distinction is why offsets can be useful when a control variable would crea
 
 ## How I would decide
 
-If the effect needs to be learned from the current data, I would use a control.
-
-If the effect is already known or should remain fixed, I would consider an offset.
-
-The choice changes more than the formula. It changes what the model is allowed to learn, how coefficients should be interpreted, and whether the model can revise an existing business structure.
+To be honest, since the purpose for using controls/offsets are so that my predictors do not mix signals from the control/offset variables, I think either method give the same solution. But I think that controls may be easier to implement if you have already created the dataset with offsets baked into the target. I think offset is a more clean approach, but someone can argue otherwise...

@@ -6,16 +6,14 @@ category: "Data Science"
 tags: ["GLM", "Coefficients", "Multicollinearity"]
 ---
 
-One thing that took me a while to internalize about GLMs is that the model is not trying to predict one exact observed outcome.
-
-It is modeling the expected value of the response, conditional on the predictors. The coefficient does not describe what must happen to one individual observation. It describes how the conditional mean moves inside the structure of the model.
+GLM is modeling the expected value of the response, conditional on the predictors. The coefficient does not describe what must happen to one individual observation, but it describes how the conditional **mean** moves inside the structure of the model.
 
 ```text
 mu(x) = E[Y | X = x]
 g(mu_i) = eta_i = X_i beta
 ```
 
-That small distinction matters a lot. A GLM coefficient lives on the link scale first. Only after applying the inverse link does it become a statement about the expected response on the original target scale.
+Took me a while to understand, but a GLM coefficient lives on the link scale first, and only after applying the inverse link does it become a statement about the expected response on the original target scale.
 
 ## The coefficient is on the link scale
 
@@ -55,9 +53,9 @@ With a log link, that becomes a ratio on the mean scale:
 E[Y | B] / E[Y | A] = exp(beta_B)
 ```
 
-The reference level is absorbed into the intercept. With several categorical variables, the intercept becomes a joint baseline: for example, North region, Red color, base class, and whatever other reference levels are present.
+The reference level is absorbed into the intercept. This means that we get the baseline group by setting other predictors as 0, which is the same as the intercept. With several categorical variables, the intercept becomes a joint baseline. It means that all dummy coefficients are deviation relative to that combination, a joint baseline. 
 
-That means every categorical coefficient is a movement away from that baseline, not an absolute standalone effect. This sounds obvious, but it becomes easy to lose track of when a model has many dummies.
+It is important to distinguish the interpretation of coefficients for categorical variables and continuous variables. For continuous, it is a relationship between the predictor and the response. For categorical, it is a movement away from the baseline, not an absolute standalone effect. This will then mean that we need to be careful how we create this baseline.
 
 ## Correlated predictors make interpretation fragile
 
@@ -126,7 +124,7 @@ In those cases, I would still inspect the model, but I would not treat multicoll
 
 ## What I would check
 
-Pearson correlation is a starting point, but it is not enough. Multicollinearity can involve several variables at once, not just one pair.
+Pearson correlation is a starting point, but I think there should be more. 
 
 The checks I would use are:
 
@@ -146,6 +144,6 @@ where `sigma_max` and `sigma_min` are the largest and smallest singular values o
 
 ## The practical takeaway
 
-GLM coefficients are interpretable, but only inside the structure of the model.
+When predictors contain substantial overlap, the model may still produce reliable fitted values, but the interpretation of any single coefficient becomes more delicate. 
 
-If predictors overlap heavily, the model can still produce useful fitted values. What becomes delicate is the story attached to one coefficient. Before I use a coefficient as a business explanation, I want to know whether that coefficient is actually stable, or whether it is just one of many ways the model could have divided up shared signal.
+Before using a coefficient as a business explanation, it is important to assess whether the coefficient is truly stable and meaningful, or simply one possible allocation of shared predictive signal among correlated variables.

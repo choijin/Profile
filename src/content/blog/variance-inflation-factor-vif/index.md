@@ -6,11 +6,9 @@ category: "Data Science"
 tags: ["VIF", "Multicollinearity", "Regression"]
 ---
 
-VIF is one of those diagnostics that looks simple, but it is easy to use mechanically without really thinking about what it is measuring.
+Variance Inflation Factor (VIF) can be used as a feature reduction method and also a diagnosis to detect multicollinearity. 
 
-Variance Inflation Factor tells us how much the variance of a coefficient estimate is inflated because that predictor overlaps with the other predictors.
-
-In other words, it is not asking whether a variable is useful. It is asking whether the model can estimate that variable's coefficient cleanly.
+As a rule of thumb, a VIF value greater than 10 (some use a threshold of 5) suggests high multicollinearity and may warrant further investigation or corrective measures.
 
 ## The basic idea
 
@@ -55,7 +53,7 @@ SE_with_collinearity(beta_j)
   = SE_without_collinearity(beta_j) * sqrt(VIF_j)
 ```
 
-So if `VIF = 9`, the standard error is inflated by:
+We can see that VIF and SE are **directly related**. So if `VIF = 9`, the standard error is inflated by:
 
 ```text
 sqrt(9) = 3

@@ -6,11 +6,10 @@ category: "Data Science"
 tags: ["Calibration", "Model Evaluation", "Risk"]
 ---
 
-Calibration and model power are related, but they are not the same thing.
 
-This distinction matters because a model can be very good at ranking risk and still produce probabilities that I should not trust at face value.
+Calibration and model power are related, but they are not the same thing. **Calibration** is ensuring that a model's predicted probabilities align with the true likelihood of events occurring.
 
-That took me a while to fully appreciate. Ranking and probability accuracy feel similar at first, but they answer different questions.
+This distinction matters because a model can be very good at ranking risk and still produce probabilities that I should not trust at face value. Ranking and probability accuracy feel similar at first, but they answer different questions.
 
 ## Power is about separation
 

@@ -26,7 +26,7 @@ That sorting is the heart of the chart.
 
 After sorting, the data is usually split into quantiles such as deciles or quintiles.
 
-For insurance, I would want those buckets to have equal exposure, not just equal record counts. Otherwise, one bucket might represent much more risk than another, and the comparison can become distorted.
+For insurance, I would want those buckets to have equal **exposure**, not just equal record counts. Otherwise, one bucket might represent much more risk than another, and the comparison can become distorted.
 
 Within each bucket, we compare actual loss cost, challenger predicted loss cost, and current predicted loss cost. Indexing each series to its overall average makes the chart easier to read.
 
