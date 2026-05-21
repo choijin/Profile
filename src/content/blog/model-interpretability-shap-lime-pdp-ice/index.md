@@ -1,7 +1,8 @@
 ---
 title: "Model Interpretability: SHAP, LIME, PDP, and ICE Plots"
 description: "How I think about local explanations, global explanations, marginal effects, and individual-level model behavior."
-date: "2026-05-09"
+date: "2024-11-20"
+order: 7
 category: "Data Science"
 tags: ["Interpretability", "SHAP", "LIME"]
 ---

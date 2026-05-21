@@ -1,7 +1,8 @@
 ---
 title: "Variance Inflation Factor: Why Adding a Constant Matters"
 description: "How VIF diagnoses multicollinearity, why it affects standard errors, and why the auxiliary regression should include an intercept."
-date: "2026-05-10"
+date: "2024-04-20"
+order: 3
 category: "Data Science"
 tags: ["VIF", "Multicollinearity", "Regression"]
 ---

@@ -1,7 +1,8 @@
 ---
 title: "Controls, Offsets, and Omitted Variable Bias in GLMs"
 description: "When to estimate a variable as a control, when to use an offset, and why omitted variables can bias insurance models."
-date: "2026-05-11"
+date: "2024-05-25"
+order: 4
 category: "Data Science"
 tags: ["GLM", "Controls", "Offsets"]
 ---

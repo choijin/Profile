@@ -1,7 +1,8 @@
 ---
 title: "ML System Design, Part 3: Deployment, Monitoring, and MLOps Tools"
 description: "Notes on batch and online prediction, model compression, cloud and edge deployment, distribution shift, production testing, continual learning, feature stores, and MLOps tools."
-date: "2024-04-02"
+date: "2025-06-05"
+order: 11
 category: "ML Systems"
 tags: ["ML System Design", "Deployment", "Monitoring", "MLOps"]
 ---

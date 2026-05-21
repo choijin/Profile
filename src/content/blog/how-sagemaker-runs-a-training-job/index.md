@@ -1,7 +1,8 @@
 ---
 title: "How SageMaker Runs a Training Job"
 description: "A practical walkthrough of Docker images, ECR, SageMaker estimators, S3 inputs, and model artifacts."
-date: "2026-05-05"
+date: "2026-05-10"
+order: 13
 category: "ML Systems"
 tags: ["AWS", "SageMaker", "Docker"]
 ---

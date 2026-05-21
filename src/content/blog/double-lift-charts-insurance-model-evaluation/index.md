@@ -1,7 +1,8 @@
 ---
 title: "Double Lift Charts for Insurance Model Evaluation"
 description: "How double lift charts compare actual loss cost, current pricing, and a challenger model."
-date: "2026-05-08"
+date: "2024-09-15"
+order: 6
 category: "Data Science"
 tags: ["Insurance", "Model Evaluation", "Lift"]
 ---

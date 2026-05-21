@@ -1,7 +1,8 @@
 ---
 title: "Data Lake vs. Data Warehouse"
 description: "Why cheap storage is not the whole story when designing analytical data platforms."
-date: "2026-05-04"
+date: "2025-09-12"
+order: 12
 category: "ML Systems"
 tags: ["Data Engineering", "Data Lake", "Warehouse"]
 ---
@@ -67,4 +68,3 @@ That adds structure, snapshots, and metadata to lake storage. It does not erase 
 - The warehouse is where data becomes usable.
 
 - The lakehouse tries to reduce the gap between the two.
-

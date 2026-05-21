@@ -1,7 +1,8 @@
 ---
 title: "Understanding GLM Coefficients"
 description: "How GLM coefficients are interpreted, and why correlated predictors can make that interpretation unstable."
-date: "2026-05-12"
+date: "2024-03-15"
+order: 2
 category: "Data Science"
 tags: ["GLM", "Coefficients", "Multicollinearity"]
 ---

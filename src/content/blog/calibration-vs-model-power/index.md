@@ -1,7 +1,8 @@
 ---
 title: "Calibration vs. Model Power"
 description: "Why a model can rank risks well but still produce unreliable probabilities."
-date: "2026-05-07"
+date: "2024-08-10"
+order: 5
 category: "Data Science"
 tags: ["Calibration", "Model Evaluation", "Risk"]
 ---

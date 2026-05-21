@@ -1,7 +1,8 @@
 ---
 title: "ML System Design, Part 1: From Business Problem to Training Data"
 description: "Notes on production priorities, business metrics, data systems, labels, sampling, and class imbalance."
-date: "2024-04-02"
+date: "2025-03-10"
+order: 9
 category: "ML Systems"
 tags: ["ML System Design", "Training Data", "Data Engineering"]
 ---

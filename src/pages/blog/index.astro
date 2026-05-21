@@ -5,9 +5,17 @@ import Container from "@components/Container.astro";
 import ArrowCard from "@components/ArrowCard.astro";
 import { BLOG } from "@consts";
 
+const sortPosts = (a: CollectionEntry<"blog">, b: CollectionEntry<"blog">) => {
+  if (a.data.order !== undefined || b.data.order !== undefined) {
+    return (a.data.order ?? Number.MAX_SAFE_INTEGER) - (b.data.order ?? Number.MAX_SAFE_INTEGER);
+  }
+
+  return b.data.date.valueOf() - a.data.date.valueOf();
+};
+
 const data = (await getCollection("blog"))
   .filter(post => !post.data.draft)
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+  .sort(sortPosts);
   
 type Acc = {
   [category: string]: CollectionEntry<"blog">[];
@@ -33,6 +41,10 @@ const categories = Object.keys(posts).sort((a, b) => {
 
   return aIndex - bIndex;
 }); 
+
+for (const category of categories) {
+  posts[category].sort(sortPosts);
+}
 ---
 
 <PageLayout title={BLOG.TITLE} description={BLOG.DESCRIPTION}>

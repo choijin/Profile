@@ -1,7 +1,8 @@
 ---
 title: "How GLMs Work"
 description: "A practical walkthrough of GLM likelihood, link functions, mean-variance relationships, deviance, dispersion, and optimization."
-date: "2026-05-13"
+date: "2024-02-10"
+order: 1
 category: "Data Science"
 tags: ["GLM", "Statistics", "Modeling"]
 ---

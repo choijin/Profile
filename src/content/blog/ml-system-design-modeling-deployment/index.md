@@ -1,7 +1,8 @@
 ---
 title: "ML System Design, Part 2: Features, Model Selection, and Evaluation"
 description: "Notes on feature engineering, leakage, model selection, experiment tracking, evaluation, and distributed training."
-date: "2024-04-02"
+date: "2025-04-18"
+order: 10
 category: "ML Systems"
 tags: ["ML System Design", "Features", "Evaluation"]
 ---
