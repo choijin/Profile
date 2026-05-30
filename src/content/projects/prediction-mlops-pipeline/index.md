@@ -6,6 +6,8 @@ order: 0
 repoURL: "https://github.com/choijin/MLOps"
 ---
 
+![MLOps](./mlops_diagram.png)
+
 This project was about getting hands-on experience with the full MLOps workflow, perhaps less about the dataset itself. I used a common public prediction dataset because I wanted to focus on the system around the model: training, tracking, model selection, deployment, and exposing predictions through an API. 
 
 - Designed and implemented an end-to-end prediction pipeline using Python, MLflow, FastAPI, and Docker.
